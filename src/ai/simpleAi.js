@@ -1,38 +1,165 @@
 import { CARD_POOL, PHASES, getEffectiveBP } from "../engine/game.js";
 
 export class SimpleAi {
+  _getUsableCores(state, player) {
+    const currentReserve = player.reserve.normal + (player.reserve.soul ? 1 : 0);
+    let usableSpiritsCores = 0;
+    for (const s of player.spirits) {
+      const card = CARD_POOL[s.cardId];
+      const sLv1Min = card?.levels?.[0]?.cores ?? 1;
+      const sTotal = s.cores.normal + (s.cores.soul ? 1 : 0);
+      usableSpiritsCores += Math.max(0, sTotal - sLv1Min);
+    }
+    let usableNexusesCores = 0;
+    for (const n of player.nexuses) {
+      usableNexusesCores += n.cores.normal + (n.cores.soul ? 1 : 0);
+    }
+    return currentReserve + usableSpiritsCores + usableNexusesCores;
+  }
+
+  _prepareReserve(game, needed) {
+    const state = game.getState();
+    const player = state.players[state.currentPlayer];
+    
+    let currentReserve = player.reserve.normal + (player.reserve.soul ? 1 : 0);
+    let remaining = needed - currentReserve;
+    if (remaining <= 0) return true;
+    
+    // First, try to pull normal cores from spirits' surplus
+    for (const s of player.spirits) {
+      if (remaining <= 0) break;
+      const card = CARD_POOL[s.cardId];
+      const sLv1Min = card?.levels?.[0]?.cores ?? 1;
+      
+      while (remaining > 0 && s.cores.normal > 0) {
+        const sTotal = s.cores.normal + (s.cores.soul ? 1 : 0);
+        if (sTotal <= sLv1Min) break;
+        
+        game.moveCore("spirit", s.uid, "reserve", null, false);
+        remaining -= 1;
+      }
+    }
+    
+    // Next, try to pull Soul Core from spirits' surplus
+    for (const s of player.spirits) {
+      if (remaining <= 0) break;
+      const card = CARD_POOL[s.cardId];
+      const sLv1Min = card?.levels?.[0]?.cores ?? 1;
+      
+      if (s.cores.soul) {
+        const sTotal = s.cores.normal + 1;
+        if (sTotal > sLv1Min) {
+          game.moveCore("spirit", s.uid, "reserve", null, true);
+          remaining -= 1;
+        }
+      }
+    }
+    
+    // Next, try to pull from nexuses
+    for (const n of player.nexuses) {
+      if (remaining <= 0) break;
+      
+      while (remaining > 0 && n.cores.normal > 0) {
+        game.moveCore("nexus", n.uid, "reserve", null, false);
+        remaining -= 1;
+      }
+      
+      if (remaining > 0 && n.cores.soul) {
+        game.moveCore("nexus", n.uid, "reserve", null, true);
+        remaining -= 1;
+      }
+    }
+    
+    return remaining <= 0;
+  }
+
   choosePlayMagic(game) {
     const state = game.getState();
     const player = state.players[state.currentPlayer];
     if (!player.isAi) return null;
+    
+    const usableCores = this._getUsableCores(state, player);
+    
     const candidates = player.hand
-      .map((cardId, index) => ({ card: CARD_POOL[cardId], index }))
-      .filter((x) => x.card?.type === "magic")
-      .filter((x) => game.canPlayMagic(x.index).ok);
-    return candidates[0]?.index ?? null;
+      .map((cardId, index) => {
+        const card = CARD_POOL[cardId];
+        if (!card || card.type !== "magic") return null;
+        const verdict = game.canPlayMagic(index);
+        if (!verdict.ok) return null;
+        
+        const needed = verdict.actualCost;
+        if (usableCores < needed) return null;
+        
+        return { card, index, needed };
+      })
+      .filter(Boolean);
+      
+    if (candidates.length > 0) {
+      const best = candidates[0];
+      this._prepareReserve(game, best.needed);
+      return best.index;
+    }
+    return null;
   }
 
   chooseDeploy(game) {
     const state = game.getState();
     const player = state.players[state.currentPlayer];
     if (!player.isAi) return null;
+    
+    const usableCores = this._getUsableCores(state, player);
+    
     const candidates = player.hand
-      .map((cardId, index) => ({ card: CARD_POOL[cardId], index }))
-      .filter((x) => x.card?.type === "nexus")
-      .filter((x) => game.canDeploy(x.index).ok);
-    return candidates[0]?.index ?? null;
+      .map((cardId, index) => {
+        const card = CARD_POOL[cardId];
+        if (!card || card.type !== "nexus") return null;
+        const verdict = game.canDeploy(index);
+        if (!verdict.ok) return null;
+        
+        const needed = verdict.actualCost;
+        if (usableCores < needed) return null;
+        
+        return { card, index, needed };
+      })
+      .filter(Boolean);
+      
+    if (candidates.length > 0) {
+      const best = candidates[0];
+      this._prepareReserve(game, best.needed);
+      return best.index;
+    }
+    return null;
   }
 
   chooseSummon(game) {
     const state = game.getState();
     const player = state.players[state.currentPlayer];
     if (!player.isAi) return null;
+    
+    const usableCores = this._getUsableCores(state, player);
+    
     const candidates = player.hand
-      .map((cardId, index) => ({ card: CARD_POOL[cardId], index }))
-      .filter((x) => x.card?.type === "spirit")
-      .filter((x) => game.canSummon(x.index).ok)
+      .map((cardId, index) => {
+        const card = CARD_POOL[cardId];
+        if (!card || card.type !== "spirit") return null;
+        const verdict = game.canSummon(index);
+        if (!verdict.ok) return null;
+        
+        const lv1Min = card.levels?.[0]?.cores ?? 1;
+        const needed = verdict.actualCost + lv1Min;
+        if (usableCores < needed) return null;
+        
+        return { card, index, needed };
+      })
+      .filter(Boolean)
       .sort((a, b) => (b.card.bp - a.card.bp) || (a.card.cost - b.card.cost));
-    return candidates[0]?.index ?? null;
+      
+    if (candidates.length > 0) {
+      const best = candidates[0];
+      this._prepareReserve(game, best.needed);
+      return best.index;
+    }
+    return null;
   }
 
   chooseAttackers(game) {

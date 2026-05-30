@@ -996,7 +996,7 @@ function renderSpiritLane(player, state, isBottomLane) {
     const level = getCardLevel(s, card);
     const bp = getEffectiveBP(s, card);
     const attackBtn = isBottomLane && isHumanTurn && state.phase === PHASES.ATTACK
-      && !s.exhausted
+      && !s.exhausted && !state.awaitingFlash && !state.awaitingBlock && !state.awaitingEffect
       ? `<button data-attack="${s.uid}" class="mini">Attack</button>` : "";
     const coreBtns = isBottomLane && isHumanTurn && inMain ? `
       <div class="core-btns">
