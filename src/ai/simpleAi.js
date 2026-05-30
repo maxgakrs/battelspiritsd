@@ -188,25 +188,28 @@ export class SimpleAi {
     //    If opp can deal >= our life unblocked, keep strong blockers back.
     const oppDamage = oppBlockers.reduce((n, s) => n + (s.symbols ?? 1), 0);
 
+    let candidates = [];
+
     if (player.life <= 2 && oppDamage >= player.life) {
       const keepCount = Math.min(oppBlockers.length, Math.ceil(available.length / 2));
       const keepers = new Set(
         byBPDesc.slice(0, keepCount).map((s) => s.uid),
       );
-      const attackers = available.filter((s) => !keepers.has(s.uid));
-      if (attackers.length > 0) return attackers.map((s) => s.uid);
-      return [];
-    }
-
-    // 3. MODERATE LIFE CHECK: if life is 3 and opp can deal 3+ damage, keep one strong blocker.
-    if (player.life === 3 && oppBlockers.length > 0 && available.length > 1 && oppDamage >= 3) {
+      candidates = available.filter((s) => !keepers.has(s.uid));
+    } else if (player.life === 3 && oppBlockers.length > 0 && available.length > 1 && oppDamage >= 3) {
+      // 3. MODERATE LIFE CHECK: if life is 3 and opp can deal 3+ damage, keep one strong blocker.
       const strongest = byBPDesc[0];
-      const attackers = available.filter((s) => s.uid !== strongest.uid);
-      if (attackers.length > 0) return attackers.map((s) => s.uid);
+      candidates = available.filter((s) => s.uid !== strongest.uid);
+    } else {
+      // 4. DEFAULT: full attack for maximum pressure
+      candidates = available;
     }
 
-    // 4. DEFAULT: full attack for maximum pressure
-    return available.map((s) => s.uid);
+    // AI will not attack if its spirit BP is less than opponent's blockers, unless lethal.
+    // But if its BP is higher or equal, it will attack to apply pressure.
+    const maxOppBP = oppBlockers.length > 0 ? Math.max(...oppBlockers.map(ebp)) : 0;
+    const finalAttackers = candidates.filter((s) => ebp(s) >= maxOppBP);
+    return finalAttackers.map((s) => s.uid);
   }
 
   chooseBlock(state, attackerUid) {
