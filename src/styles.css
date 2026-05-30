@@ -1,0 +1,1325 @@
+:root {
+  --bg-1: #080808;
+  --bg-2: #181818;
+  --panel: rgba(28, 28, 28, 0.92);
+  --line: #b8b8b8;
+  --ink: #ececec;
+  --muted: #b2b2b2;
+  --accent: #dbf0ff;
+  --accent-2: #f3f3f3;
+  --danger: #ff4d6d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Saira", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-2));
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Chakra Petch", sans-serif;
+  margin: 0;
+}
+
+#app {
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.screen {
+  display: grid;
+  grid-template-rows: auto 120px;
+  gap: 12px;
+}
+
+.hero-card,
+.panel,
+.field {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 14px;
+  backdrop-filter: blur(6px);
+}
+
+.hero-card {
+  margin-top: 10vh;
+  text-align: center;
+  padding: 36px 18px;
+}
+
+.subtitle {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.desc {
+  color: var(--muted);
+  max-width: 640px;
+  margin: 8px auto 18px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+select,
+button {
+  font: inherit;
+}
+
+select {
+  background: #133141;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+}
+
+button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+button:hover:enabled {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: linear-gradient(130deg, #f0f0f0, #a9a9a9);
+  color: #101010;
+  font-weight: 700;
+}
+
+.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.mini {
+  padding: 5px 8px;
+  font-size: 0.9rem;
+  background: #2b2b2b;
+  color: var(--ink);
+  border-color: #6f6f6f;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.topbar {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(120px, 1fr)) 1.4fr;
+  align-items: center;
+}
+
+.match-screen {
+  height: 100vh;
+  width: 100vw;
+  gap: 10px;
+  grid-template-rows: 76px auto 120px;
+}
+
+.ai-hand-strip {
+  display: flex;
+  align-items: center;
+  max-width: 98vw;
+  gap: 8px;
+  padding: 6px 10px;
+  overflow: hidden;
+}
+
+.ai-hand-label {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-hand-list {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ai-hand-card {
+  flex: 0 0 auto;
+  border: 1px solid #2a4658;
+  border-radius: 6px;
+  overflow: hidden;
+  background: transparent;
+  padding: 0;
+}
+
+.ai-card-back {
+  display: block;
+  width: 38px;
+  height: 54px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 5px;
+  transform: rotate(180deg);
+}
+
+.board-shell {
+  border: 2px solid #d7d7d7;
+  max-width: 98vw;
+  max-height: 90vh;
+  border-radius: 18px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: auto;
+  gap: 10px;
+  background: radial-gradient(circle at 50% 40%, rgba(189, 189, 189, 0.06), transparent 45%),
+    #060606;
+}
+
+.left-rail,
+.right-rail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.zone {
+  border-radius: 6px;
+  border: 2px solid #959595;
+  background: linear-gradient(180deg, rgba(167, 167, 167, 0.2), rgba(76, 76, 76, 0.28));
+}
+
+.zone h4 {
+  margin: 0 0 8px;
+  font-family: "Chakra Petch", sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.turn-seq-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+
+.turn-seq-list li.active {
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+}
+
+.small-info {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.life-players {
+  display: grid;
+  gap: 8px;
+}
+
+.life-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.life-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #c7c7c7;
+  display: inline-block;
+}
+
+.life-dot.on {
+  background: #f2f2f2;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+}
+
+.life-dot.off {
+  background: #2d2d2d;
+}
+
+.core-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.core-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.35));
+}
+
+.core-icon.life {
+  width: 18px;
+  height: 18px;
+}
+
+.core-icon.soul {
+  filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.55));
+}
+
+.core-overflow,
+.core-empty {
+  font-size: 0.75rem;
+  color: #d6d6d6;
+  border: 1px solid #777;
+  border-radius: 8px;
+  padding: 0 5px;
+  line-height: 1.3;
+}
+
+.resource-row {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.tag {
+  font-size: 0.78rem;
+  color: #d5d5d5;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.field-core {
+  border: 2px solid #999;
+  display: block;
+  border-radius: 8px;
+  padding: 10px;
+  gap: 10px;
+  align-content: start;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+}
+
+.field-title {
+  text-align: center;
+  font-size: 2rem;
+  font-family: "Chakra Petch", sans-serif;
+  text-shadow: 0 1px 0 #000, 0 0 14px rgba(255, 255, 255, 0.35);
+}
+
+.battle-logo {
+  padding: 5px;
+  text-align: center;
+  color: #d9d9d9;
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+  font-family: "Chakra Petch", sans-serif;
+}
+
+.lane {
+    height: 35vh !important;
+    width: 100%;
+    overflow: scroll;
+    border: 1px solid #7b7b7b;
+    border-radius: 8px;
+    padding: 8px;
+    gap: 10px;
+    background: rgba(20, 20, 20, 0.72);
+
+    /* รองรับ Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* รองรับ Chrome, Safari, และ Edge (Webkit) */
+.lane::-webkit-scrollbar {
+    width: 8px;          /* ความกว้างของ Scrollbar แนวตั้ง */
+    height: 8px;         /* ความสูงของ Scrollbar แนวนอน */
+}
+
+/* พื้นหลังของ Scrollbar (Track) */
+.lane::-webkit-scrollbar-track {
+    background: transparent; 
+    border-radius: 8px;
+}
+
+/* ตัวเลื่อน (Thumb) */
+.lane::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2); /* สีตัวเลื่อนแบบโปร่งแสง */
+    border-radius: 8px;
+    border: 1px solid transparent; /* เพิ่ม space รอบๆ ตัวเลื่อน */
+    background-clip: padding-box;
+}
+
+/* ตัวเลื่อนเมื่อเอาเมาส์ไปชี้ (Hover) */
+.lane::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4); /* สว่างขึ้นเล็กน้อยตอน hover */
+}
+
+.lane.active {
+  border-color: #f0f0f0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.42) inset;
+}
+
+.lane header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.stats.compact {
+  font-size: 0.78rem;
+}
+
+.spirit-lane {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.spirit-slot {
+  width: 170px;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  list-style: none;
+}
+
+.spirit-chip {
+  width: 110px;
+  height: 160px;
+  border: 1px solid #8a8a8a;
+  border-radius: 8px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.56);
+  position: relative;
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+.spirit-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  background: #141414;
+}
+
+.spirit-thumb-fallback {
+  display: grid;
+  place-items: center;
+  color: #dbe6ef;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.spirit-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.88));
+}
+
+@keyframes tap-card {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(90deg); }
+}
+
+.spirit-chip.exhausted {
+  transform: rotate(90deg);
+  filter: brightness(0.65);
+  border-color: #555;
+}
+
+.spirit-chip.exhausted-new {
+  animation: tap-card 0.32s ease-out;
+}
+
+.spirit-chip .title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.spirit-chip .meta {
+  margin: 3px 0 5px;
+  font-size: 0.8rem;
+  color: #ffffff;
+  padding:0px 3px;margin:5px;border:2px; border-radius:3px;font-weight:bold;
+}
+.spirit-chip .meta.lv1 {
+  background: #0066CC;
+}
+.spirit-chip .meta.lv2 {
+  background: #ed7104;
+}
+.spirit-chip .meta.lv3 {
+  background: #f8f403;
+}
+.spirit-chip .core-strip {
+  margin-bottom: 6px;
+}
+
+.card-info-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #c8dff0;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.card-info-btn:hover {
+  background: rgba(30, 90, 190, 0.85);
+  border-color: rgba(120, 180, 255, 0.6);
+  color: #fff;
+}
+
+.controls {
+  display: grid;
+  gap: 8px;
+}
+
+.bottom-strip {
+  
+  width: 98vw;
+  overflow: hidden;
+  gap: 10px;
+}
+
+.hand-panel {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.logs {
+  border: 1px solid #666;
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(14, 14, 14, 0.82);
+}
+
+.field.active {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 1px rgba(46, 196, 182, 0.35) inset;
+}
+
+.field header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.spirits {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.spirit {
+  border: 1px solid #2a4a5e;
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(11, 24, 35, 0.9);
+}
+
+.spirit.exhausted {
+  opacity: 0.6;
+  border-color: #5e3a3f;
+}
+
+.spirit .title {
+  font-weight: 700;
+}
+
+.spirit .meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 4px 0 6px;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+.hand-list,
+.logs ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.hand-list {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  gap: 8px;
+}
+
+.logs ul {
+  display: grid;
+  gap: 6px;
+}
+
+.hand-list li,
+.logs li {
+  border: 1px solid #2a4658;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: rgba(9, 18, 28, 0.76);
+}
+
+.hand-list .hand-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  align-items: stretch;
+  padding: 8px;
+  min-height: 250px;
+  flex: 0 0 170px;
+  background: linear-gradient(180deg, rgba(29, 45, 60, 0.95), rgba(10, 18, 28, 0.95));
+}
+
+.hand-thumb {
+  width: 100%;
+  aspect-ratio: 300 / 438;
+  object-fit: cover;
+  border: 1px solid #5d6f7d;
+  border-radius: 6px;
+  background: #101010;
+}
+
+.hand-thumb-fallback {
+  display: grid;
+  place-items: center;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  color: #dce8f3;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.12), rgba(16, 16, 16, 0.92));
+}
+
+.hand-main {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.hand-title {
+  font-weight: 700;
+}
+
+.hand-meta {
+  color: #bdd0de;
+  font-size: 0.85rem;
+}
+
+.hand-effect {
+  font-size: 0.82rem;
+  color: #d8e5ef;
+  line-height: 1.3;
+  line-clamp: 3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hand-effect span {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.block-panel {
+  margin-top: 10px;
+  border-top: 1px dashed #40617a;
+  padding-top: 8px;
+}
+
+.winner {
+  border: 1px solid #6f5a1f;
+  background: rgba(145, 105, 11, 0.25);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.deck-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.deck-stack {
+  position: relative;
+  width: 56px;
+  height: 78px;
+}
+
+.deck-stack img {
+  position: absolute;
+  width: 52px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #888;
+}
+
+.deck-stack img:nth-child(1) { top: 4px; left: 4px; }
+.deck-stack img:nth-child(2) { top: 2px; left: 2px; }
+.deck-stack img:nth-child(3) { top: 0;   left: 0; }
+
+.deck-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
+/* ─── Match animations ──────────────────────────────────────────────────────── */
+
+/* Phase / turn banner overlay */
+#anim-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#anim-overlay.anim-overlay-flash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 50, 70, 0.22);
+  animation: destroy-bg-flash 0.6s ease-out forwards;
+}
+
+@keyframes destroy-bg-flash {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes phase-banner-in {
+  0%   { opacity: 0; transform: scale(0.75) translateY(-10px); letter-spacing: 0.25em; }
+  18%  { opacity: 1; transform: scale(1.04) translateY(0);     letter-spacing: 0.10em; }
+  65%  { opacity: 1; transform: scale(1)    translateY(0); }
+  100% { opacity: 0; transform: scale(1.05) translateY(4px);   letter-spacing: 0.13em; }
+}
+
+.phase-banner-text {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  text-shadow: 0 0 32px currentColor, 0 2px 6px rgba(0, 0, 0, 0.9);
+  animation: phase-banner-in 1.6s ease-out forwards;
+  white-space: nowrap;
+}
+
+/* Quicker variant used for each step in a sequence (Start/Core/Draw/Refresh) */
+@keyframes phase-step-in {
+  0%   { opacity: 0; transform: translateY(-14px) scale(0.88); }
+  18%  { opacity: 1; transform: translateY(0)     scale(1.02); }
+  70%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(6px)   scale(0.96); }
+}
+
+.phase-banner-text.step {
+  font-size: 2rem;
+  letter-spacing: 0.18em;
+  animation: phase-step-in 0.6s ease-out forwards;
+}
+
+/* Spirit refresh (unexhaust: rotate back from 90° to 0°) */
+@keyframes spirit-refresh {
+  0%   { transform: rotate(90deg); filter: brightness(0.65); }
+  55%  { transform: rotate(-6deg); filter: brightness(1.15); }
+  100% { transform: rotate(0deg);  filter: brightness(1); }
+}
+
+.spirit-chip.refreshed {
+  animation: spirit-refresh 0.42s ease-out;
+}
+
+/* Attacking spirit highlight */
+@keyframes spirit-attack {
+  0%   { transform: translateX(0)    scale(1);    }
+  28%  { transform: translateX(16px) scale(1.07); }
+  55%  { transform: translateX(-7px) scale(1);    }
+  78%  { transform: translateX(4px);              }
+  100% { transform: translateX(0);               }
+}
+
+.spirit-chip.attacking {
+  animation: spirit-attack 0.52s ease-out;
+  border-color: #ff8c42 !important;
+  box-shadow: 0 0 16px rgba(255, 140, 66, 0.75) !important;
+}
+
+/* Spirit dying — grayscale fade before removal */
+@keyframes spirit-die {
+  0%   { filter: grayscale(0%)   brightness(1)   opacity(1); }
+  30%  { filter: grayscale(100%) brightness(0.7) opacity(1); }
+  100% { filter: grayscale(100%) brightness(0.4) opacity(0.3); }
+}
+.spirit-chip.spirit-dying {
+  animation: spirit-die 1.2s ease-in forwards;
+  pointer-events: none;
+}
+
+/* Card draw — slide in from below (player) */
+@keyframes card-draw-in {
+  from { opacity: 0; transform: translateY(32px) scale(0.88); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.hand-card.drawn {
+  animation: card-draw-in 0.36s ease-out both;
+}
+
+/* AI card draw — slide in from above */
+@keyframes ai-card-draw-in {
+  from { opacity: 0; transform: translateY(-24px) scale(0.88); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);    }
+}
+
+.ai-hand-card.drawn {
+  animation: ai-card-draw-in 0.32s ease-out both;
+}
+
+/* Flying card — travels from deck to hand */
+.flying-card {
+  position: fixed;
+  width: 38px;
+  height: 54px;
+  z-index: 200;
+  pointer-events: none;
+  border-radius: 5px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.75);
+  object-fit: cover;
+}
+
+/* ─── Card Reveal (Summon / Deploy / Magic) ─────────────────────────────────── */
+
+#card-reveal-overlay {
+  --cro-color: #ffffff;
+  --cro-color-faint: rgba(255,255,255,0.12);
+  --cro-color-mid:   rgba(255,255,255,0.32);
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  gap: 8px;
+}
+
+/* Backdrop */
+.cro-backdrop { position: absolute; inset: 0; }
+
+.cro-common .cro-backdrop { animation: cro-bg-common 1.5s ease-out forwards; }
+.cro-rare   .cro-backdrop {
+  background: radial-gradient(ellipse 65% 55% at center, var(--cro-color-mid) 0%, transparent 70%);
+  animation: cro-bg-rare 2.1s ease-out forwards;
+}
+.cro-xrare  .cro-backdrop {
+  background: radial-gradient(ellipse 75% 65% at center, var(--cro-color-mid) 0%, rgba(0,0,0,0.75) 100%);
+  animation: cro-bg-xrare 2.8s ease-out forwards;
+}
+
+@keyframes cro-bg-common {
+  0%,100%  { background: transparent; }
+  15%,72%  { background: rgba(0,0,0,0.52); }
+}
+@keyframes cro-bg-rare {
+  0%   { opacity: 0; } 12%  { opacity: 1; } 72%  { opacity: 1; } 100% { opacity: 0; }
+}
+@keyframes cro-bg-xrare {
+  0%   { opacity: 0; } 8%   { opacity: 1; } 76%  { opacity: 1; } 100% { opacity: 0; }
+}
+
+/* Initial screen flash — X-Rare only */
+.cro-xrare::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--cro-color);
+  animation: cro-flash 2.8s ease-out forwards;
+  z-index: 10;
+}
+@keyframes cro-flash {
+  0%,20%,100% { opacity: 0; } 5% { opacity: 0.60; }
+}
+
+/* Expanding ring waves — X-Rare only */
+.cro-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.cro-xrare .cro-rings::before,
+.cro-xrare .cro-rings::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid var(--cro-color);
+  animation: cro-ring 2.8s ease-out forwards;
+}
+.cro-xrare .cro-rings::before { animation-delay: 0.28s; }
+.cro-xrare .cro-rings::after  { animation-delay: 0.58s; }
+@keyframes cro-ring {
+  0%   { opacity: 0.8; width: 60px;  height: 60px; }
+  100% { opacity: 0;   width: 720px; height: 720px; }
+}
+
+/* Card wrapper */
+.cro-card-wrap {
+  position: relative;
+  z-index: 2;
+  width: min(220px, 50vw);
+}
+.cro-card-img {
+  width: 100%;
+  border-radius: 10px;
+  display: block;
+}
+
+/* Card entrance per rarity */
+.cro-common .cro-card-wrap { animation: cro-card-common 1.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.cro-rare   .cro-card-wrap { animation: cro-card-rare   2.1s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.cro-xrare  .cro-card-wrap { animation: cro-card-xrare  2.8s cubic-bezier(0.20,1.00,0.36,1) forwards; }
+
+@keyframes cro-card-common {
+  0%   { opacity: 0; transform: scale(0.60); }
+  22%  { opacity: 1; transform: scale(1.06); }
+  35%  { transform: scale(1.00); }
+  72%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.96); }
+}
+@keyframes cro-card-rare {
+  0%   { opacity: 0; transform: scale(0.35) translateY(28px); }
+  16%  { opacity: 1; transform: scale(1.12) translateY(-7px); }
+  28%  { transform: scale(0.98) translateY(0); }
+  36%  { transform: scale(1.03) translateY(-2px); }
+  44%  { transform: scale(1.00); }
+  72%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+@keyframes cro-card-xrare {
+  0%   { opacity: 0; transform: scale(0.12) translateY(120px); }
+  10%  { opacity: 1; }
+  20%  { transform: scale(1.22) translateY(-12px); }
+  32%  { transform: scale(0.96) translateY(0); }
+  40%  { transform: scale(1.06) translateY(-4px); }
+  50%  { transform: scale(1.00); }
+  76%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.10); }
+}
+
+/* Card border glow per rarity */
+.cro-common .cro-card-img {
+  box-shadow: 0 0 0 2px var(--cro-color), 0 8px 30px rgba(0,0,0,0.80);
+}
+.cro-rare .cro-card-img {
+  box-shadow: 0 0 0 2px var(--cro-color),
+              0 0 22px var(--cro-color),
+              0 10px 40px rgba(0,0,0,0.85);
+}
+.cro-xrare .cro-card-img {
+  box-shadow: 0 0 0 3px var(--cro-color),
+              0 0 28px var(--cro-color),
+              0 0 64px var(--cro-color),
+              0 16px 60px rgba(0,0,0,0.90);
+}
+
+/* Aura glow (rare+) */
+.cro-aura {
+  position: absolute;
+  inset: -20px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: -1;
+}
+.cro-rare .cro-aura {
+  background: radial-gradient(ellipse at center, var(--cro-color-mid) 0%, transparent 65%);
+  animation: cro-aura-rare 2.1s ease-out forwards;
+}
+.cro-xrare .cro-aura {
+  background: radial-gradient(ellipse at center, var(--cro-color-mid) 0%, transparent 60%);
+  animation: cro-aura-xrare 2.8s ease-out forwards;
+}
+@keyframes cro-aura-rare {
+  0%   { opacity: 0; transform: scale(0.7); }
+  20%  { opacity: 1; transform: scale(1.2); }
+  55%  { opacity: 0.7; transform: scale(1.0); }
+  72%  { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+@keyframes cro-aura-xrare {
+  0%   { opacity: 0; transform: scale(0.4); }
+  15%  { opacity: 1; transform: scale(1.5); }
+  35%  { opacity: 0.9; transform: scale(1.2); }
+  52%  { opacity: 1; transform: scale(1.35); }
+  76%  { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+/* Card name and keyword labels */
+.cro-label,
+.cro-keyword {
+  position: relative;
+  z-index: 3;
+  font-family: "Chakra Petch", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(300px, 80vw);
+}
+.cro-label {
+  color: var(--cro-color);
+  text-shadow: 0 0 18px var(--cro-color), 0 2px 6px rgba(0,0,0,0.9);
+}
+.cro-keyword {
+  color: #fbbf24;
+  text-shadow: 0 0 14px #fbbf24, 0 2px 4px rgba(0,0,0,0.9);
+}
+
+.cro-common .cro-label  { font-size: 0.72rem; animation: cro-text-fade 1.5s ease-out         forwards; }
+.cro-rare   .cro-label  { font-size: 0.90rem; animation: cro-text-fade 2.1s ease-out         forwards; }
+.cro-xrare  .cro-label  { font-size: 1.25rem; animation: cro-text-fade 2.8s ease-out 0.05s  forwards; opacity: 0; }
+.cro-rare   .cro-keyword { font-size: 0.70rem; animation: cro-text-fade 2.1s ease-out 0.12s forwards; opacity: 0; }
+.cro-xrare  .cro-keyword { font-size: 0.88rem; animation: cro-text-fade 2.8s ease-out 0.18s forwards; opacity: 0; }
+
+@keyframes cro-text-fade {
+  0%   { opacity: 0; transform: translateY(7px); }
+  25%  { opacity: 1; transform: translateY(0); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ─── Card Gallery ──────────────────────────────────────────────────────────── */
+
+.gallery-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.gallery-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.gallery-title {
+  flex: 1;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.gallery-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.gallery-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.gallery-search-input {
+  width: 100%;
+  background: #0e1a22;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.gallery-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(219, 240, 255, 0.15);
+}
+
+.gallery-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.gallery-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #1a1a1a;
+  color: var(--muted);
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.gallery-filter-btn:hover {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.gallery-filter-btn.active {
+  background: #233040;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.gallery-filter-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.gallery-filter-sep {
+  color: #444;
+  font-size: 1rem;
+  padding: 0 2px;
+}
+
+.gallery-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.gallery-card-item {
+  display: flex;
+  flex-direction: column;
+  background: #141414;
+  border: 1px solid #2e2e2e;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.gallery-card-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.gallery-card-img {
+  width: 100%;
+  aspect-ratio: 5/7;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+
+.gallery-card-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 6px;
+  border-top: 1px solid #222;
+  background: #0f0f0f;
+}
+
+.gallery-card-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gallery-card-name {
+  font-size: 0.65rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.gallery-empty {
+  grid-column: 1/-1;
+  text-align: center;
+  color: var(--muted);
+  padding: 40px 0;
+}
+
+/* ── Deck select card grid ─────────────────────────────────────────────────── */
+
+.deck-picker {
+  margin-top: 14px;
+}
+
+.deck-picker-label {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+}
+
+.deck-card {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.deck-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 7px;
+  display: block;
+}
+
+.deck-card span {
+  font-size: 0.58rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.deck-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+}
+
+.deck-card.selected {
+  border-color: var(--accent);
+  background: rgba(219, 240, 255, 0.1);
+  box-shadow: 0 0 10px rgba(219, 240, 255, 0.25);
+}
+
+.deck-card.selected span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
