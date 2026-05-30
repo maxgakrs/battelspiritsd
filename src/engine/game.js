@@ -425,13 +425,18 @@ const CARD_EFFECTS = {
     onSummon(game, spirit, player) {
       const hasExh = player.spirits.some((s) => isBloodrouse(s.cardId) && s.exhausted && s.uid !== spirit.uid);
       const opp = game._opp(player);
-      const targets = [...opp.spirits].filter((s) => s.cores.normal > 0).sort((a, b) => b.cores.normal - a.cores.normal);
+      const targets = [...opp.spirits].filter((s) => s.cores.normal > 0 || s.cores.soul).sort((a, b) => {
+        const aTotal = a.cores.normal + (a.cores.soul ? 1 : 0);
+        const bTotal = b.cores.normal + (b.cores.soul ? 1 : 0);
+        return bTotal - aTotal;
+      });
       if (!targets.length) return;
       let remaining = hasExh ? 4 : 2;
       for (const t of targets) {
         if (remaining <= 0) break;
-        const send = Math.min(t.cores.normal, remaining);
-        game._sendCores(opp, t.uid, send);
+        const tTotal = t.cores.normal + (t.cores.soul ? 1 : 0);
+        const send = Math.min(tTotal, remaining);
+        game._sendCores(opp, t.uid, send, true);
         remaining -= send;
       }
       game.addLog(`${spirit.name}: sent ${hasExh ? 4 : 2} total cores from opposing Spirits.`);
@@ -3037,7 +3042,7 @@ const MAGIC_FLASH_EFFECTS = {
       const opp = game._opp(player);
       const t = opp.spirits.find((s) => s.uid === targetUid);
       if (!t) return;
-      game._sendCores(opp, targetUid, 2);
+      game._sendCores(opp, targetUid, 2, true);
       game.addLog(`Soul Bite: sent 2 cores from ${t.name} to Reserve.`);
     },
   },
@@ -4848,7 +4853,7 @@ export class BattleSpiritGame {
       return this.playMagic(eff.handIndex, targetUid, true, eff.paySpec ?? null);
     } else if (eff.type === "selectFlashTarget") {
       return this.playFlashMagic(eff.handIndex, targetUid, eff.paySpec ?? null);
-    } else if (eff.type === "sendCoreFromSpirit") {
+    } else if (eff.type === "sendCoreFromSpirit" || eff.type === "violetWitherlandsSendCore") {
       if (!targetUid && !eff.optional) return { ok: false, reason: "Must select a target." };
       if (targetUid) { this._sendCores(opp, targetUid, 1); this.addLog(`Sent 1 core from ${opp.spirits.find(s=>s.uid===targetUid)?.name ?? "spirit"}.`); }
     } else if (eff.type === "sendCoreAndDrawIfDepleted") {
@@ -5732,19 +5737,38 @@ export class BattleSpiritGame {
     return false;
   }
 
-  // Send n non-soul cores from target to their reserve. Returns true if spirit depleted (cores.normal===0).
-  _sendCores(opp, targetUid, n) {
+  // Send n cores from target to their reserve. Returns true if spirit depleted.
+  _sendCores(opp, targetUid, n, allowSoul = false) {
     const target = opp.spirits.find((s) => s.uid === targetUid);
     if (!target) return false;
-    let send = Math.min(n, target.cores.normal);
+    let normalSend = Math.min(n, target.cores.normal);
+    let remaining = n - normalSend;
+    let soulSend = false;
+    if (allowSoul && remaining > 0 && target.cores.soul) {
+      soulSend = true;
+      remaining -= 1;
+    }
     // rbs01091 LV2: blocking spirit cores can't go below 1 total
     if (target._coreFloorOne) {
       const total = target.cores.normal + (target.cores.soul ? 1 : 0);
-      send = Math.min(send, Math.max(0, total - 1));
+      const actualAllowed = Math.max(0, total - 1);
+      const requested = normalSend + (soulSend ? 1 : 0);
+      if (requested > actualAllowed) {
+        if (actualAllowed < normalSend) {
+          normalSend = actualAllowed;
+          soulSend = false;
+        } else {
+          soulSend = false;
+        }
+      }
     }
-    if (send <= 0) return false;
-    target.cores.normal -= send;
-    opp.reserve.normal += send;
+    if (normalSend <= 0 && !soulSend) return false;
+    target.cores.normal -= normalSend;
+    opp.reserve.normal += normalSend;
+    if (soulSend) {
+      target.cores.soul = false;
+      opp.reserve.soul = true;
+    }
     const lv1Min = CARD_POOL[target.cardId]?.levels?.[0]?.cores ?? 1;
     const depleted = target.cores.normal + (target.cores.soul ? 1 : 0) < lv1Min;
     if (depleted) {

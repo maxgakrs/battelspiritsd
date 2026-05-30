@@ -1392,11 +1392,19 @@ function renderEffectModal(state) {
       return spiritBtn(s, s.ownerId === 0 ? OWN_BLUE : OPP_RED);
     }).join("");
   } else if (eff.type === "selectMagicTarget") {
+    const allSpirits = [...you.spirits, ...opp.spirits];
+    const allNexuses = [...(you.nexuses ?? []), ...(opp.nexuses ?? [])];
     targetBtns = eff.validTargets.map((uid) => {
-      const nx = opp.nexuses.find((n) => n.uid === uid);
-      if (nx) return `<button data-resolve-effect="${uid}" class="${OPP_RED}">${nx.name}</button>`;
-      const sp = opp.spirits.find((s) => s.uid === uid);
-      return sp ? spiritBtn(sp, OPP_RED) : "";
+      const nx = allNexuses.find((n) => n.uid === uid);
+      if (nx) {
+        const cls = nx.ownerId === 0 ? OWN_BLUE : OPP_RED;
+        return `<button data-resolve-effect="${uid}" class="${cls}">${nx.name}</button>`;
+      }
+      const sp = allSpirits.find((s) => s.uid === uid);
+      if (sp) {
+        return spiritBtn(sp, sp.ownerId === 0 ? OWN_BLUE : OPP_RED);
+      }
+      return "";
     }).join("");
   } else {
     // Generic fallback: search all field entities
