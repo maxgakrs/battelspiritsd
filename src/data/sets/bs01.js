@@ -1914,7 +1914,7 @@ export const CARDS_BS01 = {
     id: "bs01074BerserkerGun", format: "Eternal", set: "bs01",
     name: "Berserker-Gun", jpName: "バーサーカー・ガン", rarity: "Common",
     type: "spirit", color: "white", cost: 1, reduction: 0, symbols: 1, exsymbols: false,
-    bp: 1000, image: "./assets/cards/BS01-074.jpg", family: ["Machine"],
+    bp: 1000, image: "./assets/cards/BSC22-074.jpg", family: ["Machine"],
     levels: [
       { level: 1, cores: 1, bp: 1000 },
       { level: 2, cores: 2, bp: 3000 },
@@ -1936,7 +1936,7 @@ export const CARDS_BS01 = {
     id: "bs01075Icemaiden", format: "Eternal", set: "bs01",
     name: "Icemaiden", jpName: "アイスメイデン", rarity: "Common",
     type: "spirit", color: "white", cost: 1, reduction: 1, symbols: 1, exsymbols: false,
-    bp: 1000, image: "./assets/cards/BS01-075.jpg", family: ["Machine"],
+    bp: 1000, image: "./assets/cards/BSC22-075.jpg", family: ["Machine"],
     levels: [
       { level: 1, cores: 1, bp: 1000 },
       { level: 2, cores: 2, bp: 2000 },
@@ -1958,7 +1958,7 @@ export const CARDS_BS01 = {
     id: "bs01076RayBullet", format: "Eternal", set: "bs01",
     name: "Ray-Bullet", jpName: "レイ・ブレット", rarity: "Common",
     type: "spirit", color: "white", cost: 2, reduction: 0, symbols: 1, exsymbols: false,
-    bp: 3000, image: "./assets/cards/BS01-076.jpg", family: ["Flying Fish"],
+    bp: 3000, image: "./assets/cards/BSC22-076.jpg", family: ["Flying Fish"],
     levels: [
       { level: 1, cores: 1, bp: 3000 },
       { level: 2, cores: 3, bp: 5000 },
@@ -1984,7 +1984,7 @@ export const CARDS_BS01 = {
     id: "bs01077BabyLoki", format: "Eternal", set: "bs01",
     name: "Baby-Loki", jpName: "ベビー・ロキ", rarity: "Common",
     type: "spirit", color: "white", cost: 2, reduction: 1, symbols: 1, exsymbols: false,
-    bp: 2000, image: "./assets/cards/BS01-077.jpg", family: ["Machine"],
+    bp: 2000, image: "./assets/cards/BSC22-077.jpg", family: ["Machine"],
     levels: [
       { level: 1, cores: 1, bp: 2000 },
       { level: 2, cores: 2, bp: 3000 },
@@ -2010,7 +2010,7 @@ export const CARDS_BS01 = {
     id: "bs01078TheAutoLadyMani", format: "Eternal", set: "bs01",
     name: "The AutoLady Mani", jpName: "姫械マーニ", rarity: "Common",
     type: "spirit", color: "white", cost: 2, reduction: 1, symbols: 1, exsymbols: false,
-    bp: 1000, image: "./assets/cards/BS01-078.jpg", family: ["Ice Princess"],
+    bp: 1000, image: "./assets/cards/BSC22-078.jpg", family: ["Ice Princess"],
     levels: [
       { level: 1, cores: 1, bp: 1000 },
       { level: 2, cores: 2, bp: 2000 },
@@ -2038,7 +2038,7 @@ export const CARDS_BS01 = {
     id: "bs01079Rainbowpapillon", format: "Eternal", set: "bs01",
     name: "Rainbowpapillon", jpName: "レインボウパピヨン", rarity: "Common",
     type: "spirit", color: "white", cost: 2, reduction: 1, symbols: 1, exsymbols: false,
-    bp: 2000, image: "./assets/cards/BS01-079.jpg", family: ["Glow Insect"],
+    bp: 2000, image: "./assets/cards/BSC22-079.jpg", family: ["Glow Insect"],
     levels: [
       { level: 1, cores: 1, bp: 2000 },
       { level: 2, cores: 3, bp: 3000 },
@@ -2064,7 +2064,7 @@ export const CARDS_BS01 = {
     id: "bs01080Fenrircannon", format: "Eternal", set: "bs01",
     name: "Fenrircannon", jpName: "フェンリルキャノン", rarity: "Common",
     type: "spirit", color: "white", cost: 3, reduction: 1, symbols: 1, exsymbols: false,
-    bp: 3000, image: "./assets/cards/BS01-080.jpg", family: ["Machine Beast"],
+    bp: 3000, image: "./assets/cards/BSC22-080.jpg", family: ["Machine Beast"],
     levels: [
       { level: 1, cores: 1, bp: 3000 },
       { level: 2, cores: 3, bp: 5000 },
@@ -2090,7 +2090,7 @@ export const CARDS_BS01 = {
     id: "bs01081TheSilverScaleNithhoggr", format: "Eternal", set: "bs01",
     name: "The SilverScale Nithhoggr", jpName: "銀燐竜ニーズホッグ", rarity: "Common",
     type: "spirit", color: "white", cost: 3, reduction: 1, symbols: 1, exsymbols: false,
-    bp: 1000, image: "./assets/cards/BS01-081.jpg", family: ["Armored Dragon", "Armored Beast"],
+    bp: 1000, image: "./assets/cards/BSC22-081.jpg", family: ["Armored Dragon", "Armored Beast"],
     levels: [
       { level: 1, cores: 1, bp: 1000 },
       { level: 2, cores: 2, bp: 3000 },
@@ -2117,7 +2117,7 @@ export const CARDS_BS01 = {
     id: "bs01082UrDine", format: "Eternal", set: "bs01",
     name: "Ur-Dine", jpName: "ウル・ディーネ", rarity: "Common",
     type: "spirit", color: "white", cost: 3, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 1000, image: "./assets/cards/BS01-082.jpg", family: ["Evil Deity"],
+    bp: 1000, image: "./assets/cards/BSC22-082.jpg", family: ["Evil Deity"],
     levels: [
       { level: 1, cores: 1, bp: 1000 },
       { level: 2, cores: 2, bp: 2000 },
@@ -2144,7 +2144,7 @@ export const CARDS_BS01 = {
     id: "bs01083Rabicrysta", format: "Eternal", set: "bs01",
     name: "Rabicrysta", jpName: "ラビクリスタ", rarity: "Common",
     type: "spirit", color: "white", cost: 3, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 2000, image: "./assets/cards/BS01-083.jpg", family: ["Drifting Spirit"],
+    bp: 2000, image: "./assets/cards/BSC22-083.jpg", family: ["Drifting Spirit"],
     levels: [
       { level: 1, cores: 1, bp: 2000 },
       { level: 2, cores: 5, bp: 6000 },
@@ -2170,7 +2170,7 @@ export const CARDS_BS01 = {
     id: "bs01084Gatlingstand", format: "Eternal", set: "bs01",
     name: "Gatlingstand", jpName: "ガトリングスタンド", rarity: "Common",
     type: "spirit", color: "white", cost: 3, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 3000, image: "./assets/cards/BS01-084.jpg", family: ["Armed Machine"],
+    bp: 3000, image: "./assets/cards/BSC22-084.jpg", family: ["Armed Machine"],
     levels: [
       { level: 1, cores: 1, bp: 3000 },
       { level: 2, cores: 2, bp: 5000 },
@@ -2192,7 +2192,7 @@ export const CARDS_BS01 = {
     id: "bs01085Elephantite", format: "Eternal", set: "bs01",
     name: "Elephantite", jpName: "エレファンタイト", rarity: "Uncommon",
     type: "spirit", color: "white", cost: 4, reduction: 1, symbols: 1, exsymbols: false,
-    bp: 4000, image: "./assets/cards/BS01-085.jpg", family: ["Armored Beast"],
+    bp: 4000, image: "./assets/cards/BSC22-085.jpg", family: ["Armored Beast"],
     levels: [
       { level: 1, cores: 1, bp: 4000 },
       { level: 2, cores: 4, bp: 7000 },
@@ -2218,7 +2218,7 @@ export const CARDS_BS01 = {
     id: "bs01086QueenValkyrie", format: "Eternal", set: "bs01",
     name: "Queen-Valkyrie", jpName: "クイーン・ワルキューレ", rarity: "Common",
     type: "spirit", color: "white", cost: 4, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 2000, image: "./assets/cards/BS01-086.jpg", family: ["Android"],
+    bp: 2000, image: "./assets/cards/BSC22-086.jpg", family: ["Android"],
     levels: [
       { level: 1, cores: 1, bp: 2000 },
       { level: 2, cores: 4, bp: 4000 },
@@ -2245,7 +2245,7 @@ export const CARDS_BS01 = {
     id: "bs01087MetaldyBug", format: "Eternal", set: "bs01",
     name: "Metaldy-Bug", jpName: "メタルディー・バグ", rarity: "Uncommon",
     type: "spirit", color: "white", cost: 4, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 3000, image: "./assets/cards/BS01-087.jpg", family: ["Glow Insect"],
+    bp: 3000, image: "./assets/cards/BSC22-087.jpg", family: ["Glow Insect"],
     levels: [
       { level: 1, cores: 1, bp: 3000 },
       { level: 2, cores: 2, bp: 4000 },
@@ -2272,7 +2272,7 @@ export const CARDS_BS01 = {
     id: "bs01088Towermittcrab", format: "Eternal", set: "bs01",
     name: "Towermittcrab", jpName: "タワーミットクラブ", rarity: "Common",
     type: "spirit", color: "white", cost: 4, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 2000, image: "./assets/cards/BS01-088.jpg", family: ["Giant Beast"],
+    bp: 2000, image: "./assets/cards/BSC22-088.jpg", family: ["Giant Beast"],
     levels: [
       { level: 1, cores: 1, bp: 2000 },
       { level: 2, cores: 2, bp: 3000 },
@@ -2298,7 +2298,7 @@ export const CARDS_BS01 = {
     id: "bs01089DualcannonBell", format: "Eternal", set: "bs01",
     name: "Dualcannon-Bell", jpName: "デュアルキャノン・ベル", rarity: "Common",
     type: "spirit", color: "white", cost: 4, reduction: 3, symbols: 1, exsymbols: false,
-    bp: 3000, image: "./assets/cards/BS01-089.jpg", family: ["Android", "Armed Machine"],
+    bp: 3000, image: "./assets/cards/BSC22-089.jpg", family: ["Android", "Armed Machine"],
     levels: [
       { level: 1, cores: 1, bp: 3000 },
       { level: 2, cores: 3, bp: 5000 },
@@ -2320,7 +2320,7 @@ export const CARDS_BS01 = {
     id: "bs01090HellBlindi", format: "Eternal", set: "bs01",
     name: "Hell-Blindi", jpName: "ヘル・ブリンディ", rarity: "Uncommon",
     type: "spirit", color: "white", cost: 4, reduction: 3, symbols: 1, exsymbols: false,
-    bp: 1000, image: "./assets/cards/BS01-090.jpg", family: ["Android"],
+    bp: 1000, image: "./assets/cards/BSC22-090.jpg", family: ["Android"],
     levels: [
       { level: 1, cores: 1, bp: 1000 },
       { level: 2, cores: 3, bp: 3000 },
@@ -2372,7 +2372,7 @@ export const CARDS_BS01 = {
     id: "bs01092TheCarrierWhaleMobileflow", format: "Eternal", set: "bs01",
     name: "The CarrierWhale Mobileflow", jpName: "空母鯨モビルフロウ", rarity: "Common",
     type: "spirit", color: "white", cost: 5, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 5000, image: "./assets/cards/BS01-092.jpg", family: ["Flying Fish"],
+    bp: 5000, image: "./assets/cards/BSC22-092.jpg", family: ["Flying Fish"],
     levels: [
       { level: 1, cores: 1, bp: 5000 },
       { level: 2, cores: 2, bp: 6000 },
@@ -2450,7 +2450,7 @@ export const CARDS_BS01 = {
     id: "bs01095TheArmoredBeastBearGelmir", format: "Eternal", set: "bs01",
     name: "The ArmoredBeast Bear-Gelmir", jpName: "鎧装獣ベア・ゲルミル", rarity: "Master Rare",
     type: "spirit", color: "white", cost: 8, reduction: 3, symbols: 1, exsymbols: false,
-    bp: 7000, image: "./assets/cards/BS01-095.jpg", family: ["Armored Beast"],
+    bp: 7000, image: "./assets/cards/BS01-095.webp", family: ["Armored Beast"],
     levels: [
       { level: 1, cores: 1, bp: 7000 },
       { level: 2, cores: 2, bp: 9000 },
@@ -2507,7 +2507,7 @@ export const CARDS_BS01 = {
     id: "bs01097TheSteelWyvernValkyrious", format: "Eternal", set: "bs01",
     name: "The SteelWyvern Valkyrious", jpName: "飛龍ヴァルキュリウス", rarity: "Rare",
     type: "spirit", color: "white", cost: 8, reduction: 5, symbols: 1, exsymbols: false,
-    bp: 4000, image: "./assets/cards/BS01-097.jpg", family: ["Machine Dragon"],
+    bp: 4000, image: "./assets/cards/Valkyrious1.webp", family: ["Machine Dragon"],
     levels: [
       { level: 1, cores: 1, bp: 4000 },
       { level: 2, cores: 4, bp: 6000 },
@@ -2871,7 +2871,7 @@ export const CARDS_BS01 = {
     id: "bs01110TheTimelessIceField", format: "Eternal", set: "bs01",
     name: "The Timeless Ice Field", jpName: "時止まりの氷原", rarity: "Uncommon",
     type: "nexus", color: "white", cost: 3, reduction: 2, symbols: 1, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-110.jpg", family: [],
+    bp: 0, image: "./assets/cards/BSC22-110.jpg", family: [],
     levels: [
       { level: 1, cores: 0 },
       { level: 2, cores: 2 },
@@ -2955,7 +2955,7 @@ export const CARDS_BS01 = {
     id: "bs01113TheInvadedSilverSnow", format: "Eternal", set: "bs01",
     name: "The Invaded Silver Snow", jpName: "侵食されゆく銀世界", rarity: "Common",
     type: "nexus", color: "white", cost: 5, reduction: 3, symbols: 1, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-113.jpg", family: [],
+    bp: 0, image: "./assets/cards/BSC22-113.jpg", family: [],
     levels: [
       { level: 1, cores: 0 },
       { level: 2, cores: 4 },
@@ -3566,7 +3566,7 @@ export const CARDS_BS01 = {
     id: "bs01142PureElixir", format: "Eternal", set: "bs01",
     name: "Pure Elixir", jpName: "ピュアエリクサー", rarity: "Common",
     type: "magic", color: "white", cost: 3, reduction: 2, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-142.jpg", family: [],
+    bp: 0, image: "./assets/cards/Pureelixir1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "Refresh all exhausted Spirits you control. During this turn, the Spirits refreshed by this effect cannot attack." },
@@ -3576,7 +3576,7 @@ export const CARDS_BS01 = {
     id: "bs01142PureElixirRevival", format: "Eternal", set: "bs01",
     name: "Pure Elixir (Revival)", jpName: "ピュアエリクサー", rarity: "Common",
     type: "magic", color: "white", cost: 3, reduction: 2, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BSC22-139.jpg", family: [],
+    bp: 0, image: "./assets/cards/Pureelixir1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "Refresh all your exhausted Spirits/Ultimates. During this turn, those Spirits/Ultimates refreshed cannot attack." },
@@ -3606,7 +3606,7 @@ export const CARDS_BS01 = {
     id: "bs01144SilentWall", format: "Eternal", set: "bs01",
     name: "Silent Wall", jpName: "サイレントウォール", rarity: "Uncommon",
     type: "magic", color: "white", cost: 4, reduction: 2, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-144.jpg", family: [],
+    bp: 0, image: "./assets/cards/Silentwall1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "After this battle, end this Battle Phase." },
@@ -3616,7 +3616,7 @@ export const CARDS_BS01 = {
     id: "bs01144SilentWallRevival", format: "Eternal", set: "bs01",
     name: "Silent Wall (Revival)", jpName: "サイレントウォール", rarity: "Uncommon",
     type: "magic", color: "white", cost: 4, reduction: 2, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BSC22-141.jpg", family: [],
+    bp: 0, image: "./assets/cards/Silentwall1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "At the end of the battle, end the attack step. If your life is 2 or less, also, you can return an opposing non-battling Spirit to the hand." },
@@ -3626,7 +3626,7 @@ export const CARDS_BS01 = {
     id: "bs01145DefensiveAura", format: "Eternal", set: "bs01",
     name: "Defensive Aura", jpName: "ディフェンシブオーラ", rarity: "Common",
     type: "magic", color: "white", cost: 4, reduction: 2, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-145.jpg", family: [],
+    bp: 0, image: "./assets/cards/Defensiveaura1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "During this turn, all your blocking Spirits get +3000 BP." },
@@ -3636,7 +3636,7 @@ export const CARDS_BS01 = {
     id: "bs01145DefensiveAuraRevival", format: "Eternal", set: "bs01",
     name: "Defensive Aura (Revival)", jpName: "ディフェンシブオーラ", rarity: "Common",
     type: "magic", color: "white", cost: 4, reduction: 2, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BSC22-142.jpg", family: [],
+    bp: 0, image: "./assets/cards/Defensiveaura1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "During this turn, all your blocking Spirits get +6000 BP. If Soul Core was used to pay the cost, also, all your \"The ImpregnableFortress Odin\" can block while exhausted." },
@@ -3646,7 +3646,7 @@ export const CARDS_BS01 = {
     id: "bs01146DreamRibbon", format: "Eternal", set: "bs01",
     name: "Dream Ribbon", jpName: "ドリームリボン", rarity: "Common",
     type: "magic", color: "white", cost: 4, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-146.jpg", family: [],
+    bp: 0, image: "./assets/cards/Dreamribbon1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "Return an opposing Spirit to the Hand." },
@@ -3656,7 +3656,7 @@ export const CARDS_BS01 = {
     id: "bs01146DreamRibbonRevival", format: "Eternal", set: "bs01",
     name: "Dream Ribbon (Revival)", jpName: "ドリームリボン", rarity: "Common",
     type: "magic", color: "white", cost: 4, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BSC22-143.jpg", family: [],
+    bp: 0, image: "./assets/cards/Dreamribbon1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "Return an opposing Spirit to the Hand. If Soul Core was used to pay the cost, after this effect resolves, return an opposing 5000 BP or less Spirit to the Hand." },
@@ -3666,7 +3666,7 @@ export const CARDS_BS01 = {
     id: "bs01147DreamChest", format: "Eternal", set: "bs01",
     name: "Dream Chest", jpName: "ドリームチェスト", rarity: "Common",
     type: "magic", color: "white", cost: 5, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-147.jpg", family: [],
+    bp: 0, image: "./assets/cards/Dreamchest1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "Move target Spirit to the top of its owner's deck." },
@@ -3676,7 +3676,7 @@ export const CARDS_BS01 = {
     id: "bs01147DreamChestRevival", format: "Eternal", set: "bs01",
     name: "Dream Chest (Revival)", jpName: "ドリームチェスト", rarity: "Common",
     type: "magic", color: "white", cost: 5, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BSC22-144.jpg", family: [],
+    bp: 0, image: "./assets/cards/Dreamchest1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "Return a Spirit to the top of its owner's deck. If Soul Core is used to pay the cost, instead, return an Ultimate to the top of its owner's deck." },
@@ -3686,7 +3686,7 @@ export const CARDS_BS01 = {
     id: "bs01148LeakDrive", format: "Eternal", set: "bs01",
     name: "Leak Drive", jpName: "ラークドライブ", rarity: "Common",
     type: "magic", color: "white", cost: 6, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-148.jpg", family: [],
+    bp: 0, image: "./assets/cards/Leakdrive1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "End this battle." },
@@ -3696,7 +3696,7 @@ export const CARDS_BS01 = {
     id: "bs01148LeakDriveRevival", format: "Eternal", set: "bs01",
     name: "Leak Drive (Revival)", jpName: "ラークドライブ", rarity: "Common",
     type: "magic", color: "white", cost: 6, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BSC22-145.jpg", family: [],
+    bp: 0, image: "./assets/cards/Leakdrive1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Flash", text: "Immediately end this battle. If Soul Core is used to pay the cost, also, return an opposing Spirit/Ultimate to the hand." },
@@ -3706,7 +3706,7 @@ export const CARDS_BS01 = {
     id: "bs01149AttackShift", format: "Eternal", set: "bs01",
     name: "Attack Shift", jpName: "アタックシフト", rarity: "Common",
     type: "magic", color: "white", cost: 7, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BS01-149.jpg", family: [],
+    bp: 0, image: "./assets/cards/Attackshift1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Main", text: "During this turn, all (When Blocks) effects of Spirits activate as (When Attacks) effects." },
@@ -3717,7 +3717,7 @@ export const CARDS_BS01 = {
     id: "bs01149AttackShiftRevival", format: "Eternal", set: "bs01",
     name: "Attack Shift (Revival)", jpName: "アタックシフト", rarity: "Common",
     type: "magic", color: "white", cost: 7, reduction: 3, symbols: 0, exsymbols: false,
-    bp: 0, image: "./assets/cards/BSC22-146.jpg", family: [],
+    bp: 0, image: "./assets/cards/Attackshift1.webp", family: [],
     levels: [],
     effects: [
       { condition: "Main", text: "During this turn, the (When Blocks) effects of your Spirits/Ultimates activate at (When Attacks)." },

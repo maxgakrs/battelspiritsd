@@ -59,6 +59,49 @@ const SET_LABELS = {
 const CORE_ICON = "./assets/core.png";
 const SOUL_CORE_ICON = "./assets/soul_core.png";
 
+function getReductionText(reduction) {
+  if (typeof reduction === "object" && reduction !== null) {
+    return Object.entries(reduction)
+      .map(([color, val]) => `${color.slice(0, 3).toUpperCase()}:${val}`)
+      .join("/");
+  }
+  return reduction;
+}
+
+function renderBurstArea(player, isYou) {
+  const hasBurst = player.burstArea && player.burstArea.length > 0;
+  if (!hasBurst) {
+    return `
+      <div class="burst-slot empty border border-dashed border-gray-600 rounded-xl flex items-center justify-center text-gray-500 text-xs font-semibold uppercase tracking-wider" style="width:70px; height:98px; margin: 5px auto;">
+        Burst
+      </div>
+    `;
+  }
+  
+  const cardId = player.burstArea[0];
+  const card = CARD_POOL[cardId];
+  
+  if (isYou) {
+    return `
+      <div class="burst-slot active relative rounded-xl border border-purple-500 overflow-hidden cursor-pointer" data-card-detail="${cardId}" style="width:70px; height:98px; margin: 5px auto; box-shadow: 0 0 10px rgba(168,85,247,0.4);">
+        <img src="./assets/BS_back.webp" alt="Burst" class="w-full h-full object-cover">
+        <div class="absolute inset-x-0 bottom-0 bg-black/80 text-[10px] text-center text-purple-300 py-0.5 truncate font-semibold">
+          ${card ? card.name : "Burst"}
+        </div>
+      </div>
+    `;
+  } else {
+    return `
+      <div class="burst-slot active relative rounded-xl border border-red-500 overflow-hidden" style="width:70px; height:98px; margin: 5px auto; box-shadow: 0 0 10px rgba(239,68,68,0.3);">
+        <img src="./assets/BS_back.webp" alt="Burst" class="w-full h-full object-cover">
+        <div class="absolute inset-x-0 bottom-0 bg-black/80 text-[10px] text-center text-red-300 py-0.5 font-semibold">
+          Burst
+        </div>
+      </div>
+    `;
+  }
+}
+
 // ─── Animation helpers ────────────────────────────────────────────────────────
 
 let _bannerTimer = null;
@@ -1150,11 +1193,14 @@ function renderHand(player, state) {
     let actionBtns = "";
     if (canAct) {
       if (isSpirit && game.canSummon(idx).ok) {
-        actionBtns = `<button data-summon="${idx}" class="mini">Summon</button>`;
+        actionBtns += `<button data-summon="${idx}" class="mini">Summon</button>`;
       } else if (isNexus && game.canDeploy(idx).ok) {
-        actionBtns = `<button data-deploy="${idx}" class="mini">Deploy</button>`;
+        actionBtns += `<button data-deploy="${idx}" class="mini">Deploy</button>`;
       } else if (isMagic && game.canPlayMagic(idx).ok) {
-        actionBtns = `<button data-magic="${idx}" class="mini magic-btn">Play</button>`;
+        actionBtns += `<button data-magic="${idx}" class="mini magic-btn">Play</button>`;
+      }
+      if (game.canSetBurst(idx).ok) {
+        actionBtns += `<button data-set-burst="${idx}" class="mini bg-purple-700 text-white hover:bg-purple-600 transition-colors ml-1">Set</button>`;
       }
     }
 
@@ -1164,7 +1210,7 @@ function renderHand(player, state) {
     const effect = card?.effects?.[0]
       ? `<div class="hand-effect"><span>${card.effects[0].condition}</span> ${card.effects[0].text}</div>` : "";
     const title = card ? `${card.name}${card.jpName ? ` (${card.jpName})` : ""}` : "Unknown";
-    const meta = card ? `${card.type.toUpperCase()} | C${card.cost} R${card.reduction}${card.bp ? ` | BP ${card.bp}` : ""}` : "";
+    const meta = card ? `${card.type.toUpperCase()} | C${card.cost} R${getReductionText(card.reduction)}${card.bp ? ` | BP ${card.bp}` : ""}` : "";
 
     return `<li class="hand-card">
       ${thumb}
@@ -1211,18 +1257,21 @@ function renderCardDetailModal(cid, idx) {
     const isHumanTurn = state.currentPlayer === 0 && !you.isAi;
     const inMain = state.phase === PHASES.MAIN || state.phase === PHASES.MAIN2;
 
-    if (isHumanTurn && inMain && card.type === "spirit" && game.canSummon(idx).ok) {
-      actionBtns = `<div class="flex flex-wrap gap-2 mt-3">
-        <button id="modal-summon" class="w-full px-3 py-2 rounded-lg bg-orange-600 text-white text-sm font-semibold hover:bg-orange-500 transition-colors">Summon</button>
-      </div>`;
-    } else if (isHumanTurn && inMain && card.type === "nexus" && game.canDeploy(idx).ok) {
-      actionBtns = `<div class="flex flex-wrap gap-2 mt-3">
-        <button id="modal-deploy" class="w-full px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-500 transition-colors">Deploy</button>
-      </div>`;
-    } else if (isHumanTurn && inMain && card.type === "magic" && game.canPlayMagic(idx).ok) {
-      actionBtns = `<div class="flex flex-wrap gap-2 mt-3">
-        <button id="modal-magic" class="w-full px-3 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-500 transition-colors">Play Magic</button>
-      </div>`;
+    if (isHumanTurn && inMain) {
+      let btns = [];
+      if (card.type === "spirit" && game.canSummon(idx).ok) {
+        btns.push(`<button id="modal-summon" class="flex-1 px-3 py-2 rounded-lg bg-orange-600 text-white text-sm font-semibold hover:bg-orange-500 transition-colors">Summon</button>`);
+      } else if (card.type === "nexus" && game.canDeploy(idx).ok) {
+        btns.push(`<button id="modal-deploy" class="flex-1 px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-500 transition-colors">Deploy</button>`);
+      } else if (card.type === "magic" && game.canPlayMagic(idx).ok) {
+        btns.push(`<button id="modal-magic" class="flex-1 px-3 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-500 transition-colors">Play</button>`);
+      }
+      if (game.canSetBurst(idx).ok) {
+        btns.push(`<button id="modal-set-burst" class="flex-1 px-3 py-2 rounded-lg bg-purple-950 text-white text-sm font-semibold hover:bg-purple-800 transition-colors">Set Burst</button>`);
+      }
+      if (btns.length > 0) {
+        actionBtns = `<div class="flex gap-2 mt-3 w-full">${btns.join("")}</div>`;
+      }
     }
   }
 
@@ -1242,7 +1291,7 @@ function renderCardDetailModal(cid, idx) {
           </div>
           <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-gray-400">
             <span>Cost <b class="text-white">${card.cost}</b></span>
-            <span>Red <b class="text-white">${card.reduction}</b></span>
+            <span>Red <b class="text-white">${getReductionText(card.reduction)}</b></span>
             ${card.bp ? `<span>BP <b class="text-white">${card.bp}</b></span>` : ""}
             ${card.family ? `<span class="text-gray-600 w-full text-xs">${card.family}</span>` : ""}
           </div>
@@ -1461,7 +1510,12 @@ function renderEffectModal(state) {
   const OWN_SPIRIT_EFFECTS = new Set(["coreFromVoidToOwnSpirit", "refreshOwnSpirit", "destroyOwnSpirit", "exhaustOwnSpirit", "tombsPickPurple", "exhaustToBlock", "coreFromTrashToOwnSpirit", "bpBoostOwnClashSpirit2000", "triggerSummonEffect", "quarryPlainRefresh", "coelaTargetAF"]);
   const OPP_SPIRIT_EFFECTS = new Set(["destroySpirit", "sendCoreFromSpirit", "sendCoreAndDrawIfDepleted", "drainToOne", "exhaustSpirit", "returnToHand", "returnToDeckBottom", "bpDamage2000", "bpDamage4000", "forceAttack", "defensiveGateSecond", "barrageForestDestroy", "bubbleClusterExhaust", "forceExhaustedBlock"]);
 
-  if (OWN_SPIRIT_EFFECTS.has(eff.type)) {
+  if (eff.type === "activateBurst") {
+    targetBtns = `
+      <button data-resolve-effect="yes" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 text-white rounded-lg font-bold transition-colors">Activate Burst</button>
+      <button data-resolve-effect="no" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition-colors ml-2">Skip</button>
+    `;
+  } else if (OWN_SPIRIT_EFFECTS.has(eff.type)) {
     targetBtns = eff.validTargets.map((uid) => {
       const s = you.spirits.find((sp) => sp.uid === uid);
       return s ? spiritBtn(s, OWN_BLUE) : "";
@@ -1544,7 +1598,7 @@ function renderEffectModal(state) {
 
   // Show Skip when optional; show OK when no valid targets (prevent game lock)
   const noTargets = eff.validTargets.length === 0;
-  const showSkip = eff.optional || noTargets;
+  const showSkip = (eff.optional || noTargets) && eff.type !== "activateBurst";
   const skipLabel = noTargets ? "OK" : "Skip";
   
   // For multi-select: show submit button when ready
@@ -1778,6 +1832,12 @@ function renderModals(state) {
     cardDetailId = null; cardDetailIndex = null;
     clickPlayMagic(idx);
   });
+  document.getElementById("modal-set-burst")?.addEventListener("click", () => {
+    const idx = cardDetailIndex;
+    cardDetailId = null; cardDetailIndex = null;
+    game.setBurst(idx);
+    render(); runAiTurnLoop();
+  });
 
   // Flash
   document.querySelectorAll("[data-flash-magic]").forEach((el) => {
@@ -1868,9 +1928,12 @@ function renderMatch() {
            </div>
            <div style="width: 100px;">
             <div class="resource-row"><span class="tag">AI</span><div class="core-strip">${renderCoreIcons(aiPlayer.reserve.normal, aiPlayer.reserve.soul, 8)}</div></div>
-         <h4>Reserve</h4>
-            <span class="tag">AI Life</span><div class="life-grid">${renderLifeDots(aiPlayer.life)}</div></div>
+            <h4>Reserve</h4>
+            <span class="tag">AI Life</span><div class="life-grid">${renderLifeDots(aiPlayer.life)}</div>
+            ${renderBurstArea(aiPlayer, false)}
+            </div>
           </div>
+            
             <div class="battle-logo">
             <div class="turn-info" style="text-align: center; font-size: 11px; color: #999; display: flex; justify-content: center; gap: 15px; align-items: center;">
               <div>${renderTurnSequence(state.phase)}</div>
@@ -1881,8 +1944,11 @@ function renderMatch() {
               <button id="viewLog" class="ghost">View Log</button>
             </div>
           </div>
+          
           <div style="display: grid; grid-template-columns: 120px auto 120px; ">
-          <div style="width: 100px;"><span class="tag">You Life</span><div class="life-grid">${renderLifeDots(you.life)}</div>
+          <div style="width: 100px;">
+          ${renderBurstArea(you, true)}
+          <span class="tag">You Life</span><div class="life-grid">${renderLifeDots(you.life)}</div>
           <h4>Reserve</h4>
             <div class="resource-row"><span class="tag">You</span><div class="core-strip">${renderCoreIcons(you.reserve.normal, you.reserve.soul, 8)}</div></div>
             </div>
@@ -1946,6 +2012,13 @@ function renderMatch() {
   });
   document.querySelectorAll("[data-magic]").forEach((el) => {
     el.onclick = () => clickPlayMagic(Number(el.getAttribute("data-magic")));
+  });
+  document.querySelectorAll("[data-set-burst]").forEach((el) => {
+    el.onclick = () => {
+      const idx = Number(el.getAttribute("data-set-burst"));
+      game.setBurst(idx);
+      render(); runAiTurnLoop();
+    };
   });
   document.querySelectorAll("[data-attack]").forEach((el) => {
     el.onclick = () => clickAttack(el.getAttribute("data-attack"));
@@ -2014,7 +2087,7 @@ function renderGalleryDetailModal(cid) {
           </div>
           <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-gray-400">
             <span>Cost <b class="text-white">${card.cost}</b></span>
-            <span>${card.color ? `<span style="color:${COLOR_CSS[card.color] ?? "#fff"}">${card.color}</span>` : ""} &mdash; Red <b class="text-white">${card.reduction}</b></span>
+            <span>${card.color ? `<span style="color:${COLOR_CSS[card.color] ?? "#fff"}">${card.color}</span>` : ""} &mdash; Red <b class="text-white">${getReductionText(card.reduction)}</b></span>
             ${card.bp ? `<span>BP <b class="text-white">${card.bp.toLocaleString()}</b></span>` : ""}
             ${card.symbols ? `<span>Sym <b class="text-white">${card.symbols}</b></span>` : ""}
             ${card.family ? `<span class="text-gray-500 w-full text-xs">${Array.isArray(card.family) ? card.family.join(", ") : card.family}</span>` : ""}

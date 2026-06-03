@@ -51,3 +51,8 @@ You can target an opposing Spirit. It must attack at the start of the step if po
 ✅ Clash บังคับป้องกันไม่ทำงาน
 ✅ [LV1-2] Clash During Attack เราตีไปหา AI มันไม่block ทั้งที่ มี spirit ให้ block
 Opposing Spirits must block if possible.
+
+----------------------
+-Burst: คือการที่เราต้อง set ก่อนแล้วรอให้เกิดเงื่อนไขตรงกับที่บอกไว้เช่น [ Burst: After your Life is reduced ] เมื่อเสียไลฟ์ ความสามารถจะทำงาน 
+ฺBurst จะ set ได้แค่ 1ใบต่อผู้เล่น การ set burst จะคว่ำการ์ดไว้จนกว่าจะทำงาน 
+-reduction: {white: 1,red: 1} ยังไม่รองรับเอฟเฟคนี้

@@ -8,6 +8,7 @@ import { CARDS_RSD03 } from "./sets/rsd03.js";
 import { CARDS_RSD04 } from "./sets/rsd04.js";
 import { CARDS_RSD05 } from "./sets/rsd05.js";
 import { CARDS_RSD06 } from "./sets/rsd06.js";
+import { CARDS_SD06 } from "./sets/sd06.js";
 
 export const CARD_POOL = {
   ...CARDS_BS01,
@@ -20,6 +21,7 @@ export const CARD_POOL = {
   ...CARDS_RSD04,
   ...CARDS_RSD05,
   ...CARDS_RSD06,
+  ...CARDS_SD06
 };
 
 export const DECKS = {
@@ -435,6 +437,36 @@ export const DECKS = {
       "bs01147DreamChest",
       "bs01148LeakDrive",
       "bs01X04TheImpregnableFortressOdin",
+    ],
+  },
+
+  deckSD06_HeroBurst: {
+    id: "deckSD06_HeroBurst",
+    name: "SD06 Hero-Burst",
+    cards: [
+      // Spirits (10)
+      "sd06001OhdoranRevival", "sd06001OhdoranRevival",
+      "sd06003OneKengoRevival", "sd06003OneKengoRevival",
+      "sd06004DosMonkeyRevival", "sd06004DosMonkeyRevival",
+      "sd06007TheHeroDragonLordDragon", "sd06007TheHeroDragonLordDragon",
+      "sd06010TheSeaDragonCimaCreek", "sd06010TheSeaDragonCimaCreek",
+      
+      // Nexuses (8)
+      "sd06011TheHeroEmperorDeitySword", "sd06011TheHeroEmperorDeitySword",
+      "sd06011TheHeroEmperorDeitySwordRevival", "sd06011TheHeroEmperorDeitySwordRevival",
+      "sd06012TheHeroEmperorDeityShield", "sd06012TheHeroEmperorDeityShield",
+      "sd06012TheHeroEmperorDeityShieldRevival", "sd06012TheHeroEmperorDeityShieldRevival",
+      
+      // Burst Magic (22)
+      "sd06013BurstDraw", "sd06013BurstDraw", "sd06013BurstDraw",
+      "sd06014BurstCross", "sd06014BurstCross",
+      "sd06014BurstCrossRevival", "sd06014BurstCrossRevival",
+      "sd06015BurstFlame", "sd06015BurstFlame",
+      "sd06015BurstFlameRevival", "sd06015BurstFlameRevival",
+      "sd06016BurstWall", "sd06016BurstWall", "sd06016BurstWall",
+      "sd06016BurstWallRevival", "sd06016BurstWallRevival", "sd06016BurstWallRevival",
+      "sd06017BurstStorm", "sd06017BurstStorm",
+      "sd06017BurstStormRevival", "sd06017BurstStormRevival",
     ],
   },
 };

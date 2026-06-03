@@ -5,6 +5,10 @@ import {
   BS01_MAGIC_FLASH_EFFECTS,
   BS01_INVOKE_FLASH_HANDLERS,
 } from "./bs01-effects.js";
+import {
+  SD06_CARD_EFFECTS,
+  SD06_MAGIC_EFFECTS,
+} from "./sd06-effects.js";
 
 const PHASES = { MAIN: "MAIN", ATTACK: "ATTACK", MAIN2: "MAIN2" };
 const PHASE_ORDER = [PHASES.MAIN, PHASES.ATTACK, PHASES.MAIN2];
@@ -2472,12 +2476,15 @@ const CARD_EFFECTS = {
   rbs01X18TheShelledBeastNepbalander: {
     onAttack(_game, spirit) { spirit._rumbleN = 7; },
   },
+
+  ...SD06_CARD_EFFECTS,
 };
 
 // --- Magic effect handlers ---
 
 const MAGIC_EFFECTS = {
   ...BS01_MAGIC_EFFECTS,
+  ...SD06_MAGIC_EFFECTS,
   rsd01012BreakClaw: {
     getMainTargets(game, player) {
       return game._opp(player).nexuses.map((n) => ({ uid: n.uid, label: n.name }));
@@ -2754,6 +2761,7 @@ const MAGIC_EFFECTS = {
 
 const MAGIC_FLASH_EFFECTS = {
   ...BS01_MAGIC_FLASH_EFFECTS,
+  ...SD06_MAGIC_EFFECTS,
   rsd01012BreakClaw: {
     getFlashTargets(_game, player) {
       return player.spirits.map((s) => ({ uid: s.uid, label: `${s.name} (+3000 BP)` }));
@@ -4361,6 +4369,7 @@ function makePlayer(id, deckId, isAi) {
     nexuses: [],
     trash: [],
     banished: [],
+    burstArea: [], // Set Burst cards (facedown until activation)
     reserve: { normal: 3, soul: true },
     trashCore: { normal: 0, soul: false },
     life: 5,
@@ -4372,6 +4381,26 @@ function countSymbols(player, color) {
   const nx = player.nexuses.reduce((n, nx) => (nx.color === color ? n + nx.symbols : n), 0);
   return s + nx;
 }
+
+// Calculate cost reduction for cards with numeric or dual-color reduction
+function calculateReduction(card, player) {
+  if (!card.reduction) return 0;
+  // Numeric reduction (simple case): e.g., reduction: 2
+  if (typeof card.reduction === "number") {
+    return Math.min(card.reduction, countSymbols(player, card.color) + passiveSymbolBonus(player, card));
+  }
+  // Dual/multi-color reduction: e.g., reduction: {red: 2, white: 1}
+  if (typeof card.reduction === "object" && card.reduction !== null) {
+    let totalReduction = 0;
+    for (const [color, maxReduce] of Object.entries(card.reduction)) {
+      const symbols = countSymbols(player, color);
+      totalReduction += Math.min(symbols, maxReduce);
+    }
+    return totalReduction;
+  }
+  return 0;
+}
+
 
 // Returns extra symbols granted by passive on-field effects when summoning `card`.
 function passiveSymbolBonus(player, card) {
@@ -4566,6 +4595,11 @@ export class BattleSpiritGame {
     const player = this.activePlayer();
     const skipFirst = this.turnNumber === 0 && this.currentPlayer === 0;
     player._depletedOpponentThisTurn = false;
+    player._burstsSetThisTurn = false;
+    player._setBurstThisTurn = null;
+    // Clear burst set flags from previous turn
+    player.spirits.forEach((s) => s._burstSet = false);
+    player.nexuses.forEach((n) => n._burstSet = false);
     this.addLog(`Turn start: ${player.name}`);
     if (this.checkDeckOutAtStart(player)) return;
     if (!skipFirst) {
@@ -4671,7 +4705,7 @@ export class BattleSpiritGame {
     const cardId = player.hand[handIndex];
     const card = CARD_POOL[cardId];
     if (!card || card.type !== "spirit") return { ok: false, reason: "Not a spirit card." };
-    const reduction = Math.min(card.reduction, countSymbols(player, card.color) + passiveSymbolBonus(player, card));
+    const reduction = calculateReduction(card, player);
     const actualCost = Math.max(0, card.cost - reduction);
     const lv1Min = card.levels?.[0]?.cores ?? 1;
     const legacyAvailable = hasKeyword(cardId, "Legacy")
@@ -4771,6 +4805,9 @@ export class BattleSpiritGame {
     player.nexuses.forEach((n) => {
       CARD_EFFECTS[n.cardId]?.onNexusSummon?.(this, n, player, spirit);
     });
+    // Check for opponent Burst activation: "After an opposing Spirit's (When Summoned) effect resolves"
+    const opp = this._opp(player);
+    this.checkBurstActivation(opp, "After an opposing Spirit's (When Summoned) effect resolves");
     return { ok: true };
   }
 
@@ -4811,6 +4848,9 @@ export class BattleSpiritGame {
     player.nexuses.forEach((n) => {
       CARD_EFFECTS[n.cardId]?.onNexusSummon?.(this, n, player, spirit);
     });
+    // Check for opponent Burst activation: "After an opposing Spirit's (When Summoned) effect resolves"
+    const opp = this._opp(player);
+    this.checkBurstActivation(opp, "After an opposing Spirit's (When Summoned) effect resolves");
     return { ok: true };
   }
 
@@ -4825,7 +4865,7 @@ export class BattleSpiritGame {
     const cardId = player.hand[handIndex];
     const card = CARD_POOL[cardId];
     if (!card || card.type !== "nexus") return { ok: false, reason: "Not a nexus card." };
-    const reduction = Math.min(card.reduction, countSymbols(player, card.color));
+    const reduction = calculateReduction(card, player);
     const actualCost = Math.max(0, card.cost - reduction);
     if (totalFieldCores(player) < actualCost) return { ok: false, reason: "Not enough cores." };
     return { ok: true, actualCost, card };
@@ -4864,7 +4904,7 @@ export class BattleSpiritGame {
     const cardId = player.hand[handIndex];
     const card = CARD_POOL[cardId];
     if (!card || card.type !== "magic") return { ok: false, reason: "Not a magic card." };
-    const reduction = Math.min(card.reduction, countSymbols(player, card.color));
+    const reduction = calculateReduction(card, player);
     const actualCost = Math.max(0, card.cost - reduction);
     if (totalFieldCores(player) < actualCost) return { ok: false, reason: "Not enough cores." };
     return { ok: true, actualCost, card };
@@ -4936,6 +4976,131 @@ export class BattleSpiritGame {
     return { ok: true };
   }
 
+  // --- Burst Management ---
+
+  canSetBurst(handIndex) {
+    const player = this.activePlayer();
+    const phase = PHASE_ORDER[this.phaseIndex];
+    // Can only set Burst in Main Step
+    if (phase !== PHASES.MAIN) return { ok: false, reason: "Set Burst only in Main phase." };
+    // Can only have 1 set Burst at a time
+    if (player.burstArea.length > 0) return { ok: false, reason: "Already have a set Burst." };
+    // Can only set once per turn (reset at turn start)
+    if (player._burstsSetThisTurn) return { ok: false, reason: "Already set a Burst this turn." };
+    
+    const cardId = player.hand[handIndex];
+    const card = CARD_POOL[cardId];
+    if (!card || !card.keyword || card.keyword !== "Burst") {
+      return { ok: false, reason: "Not a Burst card." };
+    }
+    return { ok: true, card };
+  }
+
+  setBurst(handIndex) {
+    const player = this.activePlayer();
+    const verdict = this.canSetBurst(handIndex);
+    if (!verdict.ok) return verdict;
+
+    const cardId = player.hand.splice(handIndex, 1)[0];
+    const card = CARD_POOL[cardId];
+    
+    // Place facedown in Burst Area
+    player.burstArea.push(cardId);
+    player._burstsSetThisTurn = true;
+    player._setBurstThisTurn = cardId;
+    
+    this.addLog(`${player.name} sets ${card.name} as Burst (facedown).`);
+    
+    // Trigger onSetBurst effects for all nexuses
+    player.nexuses.forEach((n) => {
+      const nl = getCardLevel(n, CARD_POOL[n.cardId]);
+      CARD_EFFECTS[n.cardId]?.onSetBurst?.(this, n, player);
+      n._burstSet = true; // Mark that a burst was just set for this turn
+    });
+    
+    // Mark any spirits as having access to burst
+    player.spirits.forEach((s) => {
+      s._burstSet = true;
+    });
+    
+    return { ok: true };
+  }
+
+  // Check and handle Burst activation based on trigger condition
+  checkBurstActivation(player, condition) {
+    if (player.burstArea.length === 0) return; // No Burst set
+    
+    const burstCardId = player.burstArea[0];
+    const burstCard = CARD_POOL[burstCardId];
+    
+    // Check if the burst condition matches
+    let shouldActivate = false;
+    const effects = burstCard.effects || [];
+    
+    for (const effect of effects) {
+      if (effect.condition && effect.condition.includes(condition)) {
+        shouldActivate = true;
+        break;
+      }
+    }
+    
+    if (!shouldActivate) return; // Condition not met
+    
+    // If it's AI, auto-activate. If human, prompt them.
+    if (player.isAi) {
+      this._activateBurst(burstCardId, player, this._opp(player));
+    } else {
+      this.awaitingEffect = {
+        type: "activateBurst",
+        label: `Trigger Burst: ${burstCard.name}?`,
+        cardId: burstCardId,
+        ownerId: player.id,
+        validTargets: ["yes", "no"],
+        optional: true,
+      };
+    }
+  }
+
+  _activateBurst(burstCardId, player, opp) {
+    const card = CARD_POOL[burstCardId];
+    
+    // Remove from burst area
+    const idx = player.burstArea.indexOf(burstCardId);
+    if (idx >= 0) player.burstArea.splice(idx, 1);
+    
+    this.addLog(`${player.name} activates Burst: ${card.name}`);
+    
+    if (card.type === "magic") {
+      const handler = MAGIC_EFFECTS[burstCardId];
+      if (handler) {
+        handler.burst?.(this, player);
+        if (handler.main) {
+          handler.main(this, player);
+        } else if (handler.flash) {
+          handler.flash(this, player);
+        }
+      }
+    } else if (card.type === "spirit") {
+      // Summon the spirit card for free by placing 1 core from reserve/field
+      const spirit = makeSpiritFromCard(burstCardId, player.id, this.turnNumber, 0);
+      player.spirits.push(spirit);
+      this.placeCoresOnSpirit(player, spirit, 1);
+      this._checkAndDestroyDepleted(player);
+      this.addLog(`${player.name} summons ${spirit.name} via Burst.`);
+      CARD_EFFECTS[burstCardId]?.onSummon?.(this, spirit, player);
+      player.nexuses.forEach((n) => {
+        CARD_EFFECTS[n.cardId]?.onNexusSummon?.(this, n, player, spirit);
+      });
+      // Check for opponent Burst activation because a spirit was summoned
+      this.checkBurstActivation(opp, "After an opposing Spirit's (When Summoned) effect resolves");
+    }
+    
+    // Trigger spirit effects that respond to burst activation
+    player.spirits.forEach((s) => {
+      CARD_EFFECTS[s.cardId]?.onBurstActivated?.(this, s, player);
+    });
+  }
+
   // --- Effect resolution ---
 
   resolveEffect(targetUid, aiBlockChooser = null) {
@@ -4943,9 +5108,15 @@ export class BattleSpiritGame {
     const eff = this.awaitingEffect;
     this.awaitingEffect = null;
     const player = this.players[eff.ownerId];
-
     const opp = this._opp(player);
-    if (eff.type === "destroySpirit") {
+
+    if (eff.type === "activateBurst") {
+      if (targetUid === "yes") {
+        this._activateBurst(eff.cardId, player, opp);
+      } else {
+        this.addLog(`${player.name} chooses not to activate Burst.`);
+      }
+    } else if (eff.type === "destroySpirit") {
       if (!targetUid && !eff.optional) return { ok: false, reason: "Must select a target." };
       if (targetUid) this.destroySpirit(opp, targetUid);
     } else if (eff.type === "returnCardFromTrash") {
@@ -5373,6 +5544,8 @@ export class BattleSpiritGame {
     player.trash.push(spirit.cardId);
     player.spirits.splice(idx, 1);
     this.addLog(`${spirit.name} is destroyed.`);
+    // Trigger Burst activation for "After your Spirit is destroyed"
+    this.checkBurstActivation(player, "After your Spirit is destroyed");
   }
 
   resolveBattle(attackerUid, blockerUid = null) {
@@ -5617,6 +5790,8 @@ export class BattleSpiritGame {
       delete s._coreFloorOne;
       delete s._mustBlock;
     });
+    // Trigger Burst activation for "After an opposing Spirit attacks"
+    this.checkBurstActivation(defPlayer, "After an opposing Spirit attacks");
     return { ok: true };
   }
 
@@ -5851,7 +6026,7 @@ export class BattleSpiritGame {
       (e) => typeof e.condition === "string" && e.condition.includes("Flash") && e.condition.includes("Opposing Attack Step"),
     );
     if (!hasFlashEffect) return { ok: false, reason: "No flash summon effect." };
-    const reduction = Math.min(card.reduction, countSymbols(player, card.color));
+    const reduction = calculateReduction(card, player);
     const actualCost = Math.max(0, card.cost - reduction);
     const lv1Min = card.levels?.[0]?.cores ?? 1;
     // Flash: only reserve available (no auto-move from field during battle step)
@@ -5892,7 +6067,7 @@ export class BattleSpiritGame {
     const card = CARD_POOL[cardId];
     if (!card || card.type !== "magic") return { ok: false, reason: "Not a magic card." };
     if (!card.effects?.some((e) => e.condition === "Flash")) return { ok: false, reason: "No Flash effect." };
-    const reduction = Math.min(card.reduction, countSymbols(player, card.color));
+    const reduction = calculateReduction(card, player);
     // Soul Magic: pay with just Soul Core if player has red symbol
     const isSoulMagic = card.keyword === "Soul Magic"
       && player.reserve.soul && countSymbols(player, card.color) > 0;
@@ -6041,6 +6216,12 @@ export class BattleSpiritGame {
     player.life = Math.max(0, player.life - amount);
     const lost = before - player.life;
     if (lost > 0) player.reserve.normal += lost;
+    
+    // Check for Burst activation: "After your Life is reduced"
+    if (lost > 0) {
+      this.checkBurstActivation(player, "After your Life is reduced");
+    }
+    
     return lost;
   }
 
