@@ -212,6 +212,31 @@ export class SimpleAi {
     return finalAttackers.map((s) => s.uid);
   }
 
+  chooseLevelUp(game) {
+    const state = game.getState();
+    const player = state.players[state.currentPlayer];
+    if (!player.isAi) return null;
+    if (player.reserve.normal <= 0) return null;
+
+    for (const s of player.spirits) {
+      const card = CARD_POOL[s.cardId];
+      if (!card?.levels || card.levels.length < 2) continue;
+      const currentTotal = s.cores.normal + (s.cores.soul ? 1 : 0);
+      // Find next level threshold
+      for (const entry of card.levels) {
+        const req = typeof entry.cores === "string" ? parseInt(entry.cores, 10) : entry.cores;
+        if (currentTotal < req) {
+          // Adding one core from reserve would help reach next level
+          if (game.canMoveCore("reserve", null, "spirit", s.uid, false).ok) {
+            return { spiritUid: s.uid };
+          }
+          break;
+        }
+      }
+    }
+    return null;
+  }
+
   chooseBlock(state, attackerUid) {
     const attackerOwner = state.currentPlayer;
     const defender = state.players[attackerOwner === 0 ? 1 : 0];

@@ -498,6 +498,7 @@ button:disabled {
 }
 .spirit-chip .meta.lv3 {
   background: #f8f403;
+  color: #000;
 }
 .spirit-chip .core-strip {
   margin-bottom: 6px;
@@ -1248,6 +1249,15 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
+  flex: 1;
+}
+
+.gallery-card-set {
+  font-size: 0.55rem;
+  color: #555;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: monospace;
 }
 
 .gallery-empty {
@@ -1276,6 +1286,29 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
   gap: 8px;
+}
+
+.deck-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.deck-list-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 0.58rem;
+  padding: 2px 0;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
+}
+
+.deck-list-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--accent);
 }
 
 .deck-card {

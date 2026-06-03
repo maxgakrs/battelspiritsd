@@ -36,10 +36,25 @@ let magicPayFlow = null;
 // { handIndex, card, baseCost, actualCost, paySpec }
 let nexusPayFlow = null;
 
+// Multi-select card effect state (for Feeding Draw, Menhir Circle, Rock Drilling etc)
+// { selectedCards: [], maxSelect: N }
+let multiSelectCards = null;
+
 let gallerySearch = "";
 let galleryColorFilter = null;
 let galleryTypeFilter = null;
+let gallerySetFilter = null;
+let galleryFormatFilter = null;
 let galleryDetailId = null;
+
+let deckListViewId = null;
+
+const SET_LABELS = {
+  bs01: "BS01",
+  rsd01: "26RSD01", rsd02: "26RSD02", rsd03: "26RSD03",
+  rsd04: "26RSD04", rsd05: "26RSD05", rsd06: "26RSD06",
+  rbs01: "RBS01", rp26: "RP26",
+};
 
 const CORE_ICON = "./assets/core.png";
 const SOUL_CORE_ICON = "./assets/soul_core.png";
@@ -293,6 +308,11 @@ async function runAiTurnLoop() {
       if (s.awaitingFlash) break;
 
       if (s.phase === PHASES.MAIN || s.phase === PHASES.MAIN2) {
+        const levelUp = ai.chooseLevelUp(game);
+        if (levelUp) {
+          game.moveCore("reserve", null, "spirit", levelUp.spiritUid, false);
+          render(); await _waitForAnim(200); continue;
+        }
         const deployIdx = ai.chooseDeploy(game);
         if (deployIdx !== null) {
           const card = CARD_POOL[p.hand[deployIdx]];
@@ -889,8 +909,9 @@ function _tryAutoPassFlash() {
   const isHumanAttacking = state.currentPlayer === 0;
   const hasFlashMagic = you.hand.some((_, idx) => game.canPlayFlashMagic(idx).ok);
   const hasInvokeFlash = isHumanAttacking && game.canInvokeFlash(attackerUid).ok;
+  const hasAnyAttackStepFlash = isHumanAttacking && you.spirits.some(s => s.uid !== attackerUid && game.canInvokeFlash(s.uid).ok);
   const hasNexusFlash = isHumanAttacking && you.nexuses.some(n => game.canInvokeNexusFlash(n.uid).ok);
-  if (hasFlashMagic || hasInvokeFlash || hasNexusFlash) return false;
+  if (hasFlashMagic || hasInvokeFlash || hasAnyAttackStepFlash || hasNexusFlash) return false;
   game.passFlash();
   render();
   runAiTurnLoop();
@@ -898,7 +919,54 @@ function _tryAutoPassFlash() {
 }
 
 function clickResolveEffect(targetUid) {
-  game.resolveEffect(targetUid, aiBlockChooser);
+  // Handle multi-select card effects
+  const state = game?.getState();
+  if (state?.awaitingEffect) {
+    const eff = state.awaitingEffect;
+    const isMultiSelect = ["feedingDrawReturnCards", "menhirCircleSelectCards", "rockDrillingSelectCards", "nestlingSelectCards", "emeraldAbyssInvokeMain"].includes(eff.type);
+    
+    if (isMultiSelect && targetUid !== "skip" && targetUid !== "submit") {
+      const maxSelect = eff.type === "feedingDrawReturnCards" ? 2 :
+                       eff.type === "menhirCircleSelectCards" ? 2 :
+                       eff.type === "rockDrillingSelectCards" ? 3 :
+                       eff.type === "emeraldAbyssInvokeMain" ? 1 : 2;
+      
+      if (!multiSelectCards) {
+        multiSelectCards = { selectedCards: [], maxSelect };
+      }
+      
+      // Toggle card selection
+      const idx = multiSelectCards.selectedCards.indexOf(targetUid);
+      if (idx >= 0) {
+        multiSelectCards.selectedCards.splice(idx, 1);
+      } else if (multiSelectCards.selectedCards.length < maxSelect) {
+        multiSelectCards.selectedCards.push(targetUid);
+      }
+      
+      render();
+      return;
+    }
+    
+    // Handle submit for multi-select
+    if (targetUid === "submit" && multiSelectCards && multiSelectCards.selectedCards.length > 0) {
+      const selected = multiSelectCards.selectedCards;
+      multiSelectCards = null;
+      game.resolveEffect(selected, aiBlockChooser);
+      if (!_tryAutoPassFlash()) { render(); runAiTurnLoop(); }
+      return;
+    }
+  }
+  
+  // Handle final submission or normal single-select
+  if (multiSelectCards && multiSelectCards.selectedCards.length > 0) {
+    const selected = multiSelectCards.selectedCards;
+    multiSelectCards = null;
+    game.resolveEffect(selected, aiBlockChooser);
+  } else {
+    multiSelectCards = null;
+    game.resolveEffect(targetUid, aiBlockChooser);
+  }
+  
   if (!_tryAutoPassFlash()) { render(); runAiTurnLoop(); }
 }
 
@@ -912,6 +980,25 @@ function clickPassFlash() {
 
 function clickPlayFlashMagic(index) {
   openMagicPayFlow(index, 'flashWindow');
+}
+
+function clickFlashSummon(index) {
+  const idx = Number(index);
+  if (Number.isNaN(idx)) return;
+  const res = game.flashSummon(idx);
+  render();
+  // If flash window continues, don't run AI loop; otherwise continue
+  if (!_tryAutoPassFlash()) { runAiTurnLoop(); }
+}
+
+function clickInvokeMain(uid) {
+  game.invokeMain(uid);
+  render(); runAiTurnLoop();
+}
+
+function clickInvokeNexusMain(uid) {
+  game.invokeNexusMain(uid);
+  render(); runAiTurnLoop();
 }
 
 function clickInvokeFlash(uid) {
@@ -976,6 +1063,8 @@ function renderSpiritLane(player, state, isBottomLane) {
         ${player.reserve.soul && !n.cores.soul ? `<button data-mv="reserve,,nexus,${n.uid},1" class="mini core-btn sc">SC+</button>` : ""}
         ${n.cores.soul ? `<button data-mv="nexus,${n.uid},reserve,,1" class="mini core-btn sc">SC−</button>` : ""}
       </div>` : "";
+    const nexusInvokeMainBtn = isBottomLane && isHumanTurn && inMain && game.canInvokeNexusMain(n.uid).ok
+      ? `<button data-invoke-nexus-main="${n.uid}" class="mini invoke-btn">Invoke</button>` : "";
     const nExClass = n.exhausted
       ? `exhausted${prevExhausted.has(n.uid) ? "" : " exhausted-new"}` : "";
     return `<li class="spirit-slot" data-uid="${n.uid}">
@@ -986,7 +1075,7 @@ function renderSpiritLane(player, state, isBottomLane) {
           <div class="title">${n.name}</div>
           <div class="meta lv${level}">LV${level} | NEXUS</div>
           <div class="core-strip">${renderCoreIcons(n.cores.normal, n.cores.soul, 6)}</div>
-          ${coreBtns}
+          ${coreBtns}${nexusInvokeMainBtn}
         </div>
       </div></li>`;
   }).join("");
@@ -998,6 +1087,8 @@ function renderSpiritLane(player, state, isBottomLane) {
     const attackBtn = isBottomLane && isHumanTurn && state.phase === PHASES.ATTACK
       && !s.exhausted && !state.awaitingFlash && !state.awaitingBlock && !state.awaitingEffect
       ? `<button data-attack="${s.uid}" class="mini">Attack</button>` : "";
+    const invokeMainBtn = isBottomLane && isHumanTurn && inMain && game.canInvokeMain(s.uid).ok
+      ? `<button data-invoke-main="${s.uid}" class="mini invoke-btn">Invoke</button>` : "";
     const coreBtns = isBottomLane && isHumanTurn && inMain ? `
       <div class="core-btns">
         ${player.reserve.normal > 0 ? `<button data-mv="reserve,,spirit,${s.uid},0" class="mini core-btn">+</button>` : ""}
@@ -1018,7 +1109,7 @@ function renderSpiritLane(player, state, isBottomLane) {
           <div class="title">${s.name}</div>
           <div class="meta lv${level}">LV${level} | ${bp} BP</div>
           <div class="core-strip">${renderCoreIcons(s.cores.normal, s.cores.soul, 6)}</div>
-          ${coreBtns}${attackBtn}
+          ${coreBtns}${attackBtn}${invokeMainBtn}
         </div>
       </div></li>`;
   }).join("");
@@ -1173,14 +1264,15 @@ function renderBlockModal(state) {
   const attackerBp = attacker ? getEffectiveBP(attacker, attackerCard) : 0;
 
   const blockerBtns = defender.spirits
-    .filter((s) => !s.exhausted)
+    .filter((s) => !s.exhausted || s._mustBlock)
     .map((s) => {
       const bp = getEffectiveBP(s, CARD_POOL[s.cardId]);
       const wins = bp >= attackerBp;
       const cls = wins
         ? "border-green-600/60 bg-green-950/60 text-green-100 hover:bg-green-900/60"
         : "border-yellow-700/60 bg-yellow-950/40 text-yellow-100 hover:bg-yellow-900/40";
-      return `<button data-block="${s.uid}" class="px-3 py-1.5 rounded-xl border ${cls} text-sm font-semibold transition-colors">${s.name} <span class="text-xs opacity-70">${bp} BP</span></button>`;
+      const tag = s._mustBlock ? ` <span class="text-orange-400 text-xs">[must]</span>` : "";
+      return `<button data-block="${s.uid}" class="px-3 py-1.5 rounded-xl border ${cls} text-sm font-semibold transition-colors">${s.name}${tag} <span class="text-xs opacity-70">${bp} BP</span></button>`;
     }).join("");
 
   let attackerInfoPanel = "";
@@ -1305,6 +1397,13 @@ function renderFlashModal(state) {
       const sLabel = _invokeFlashLabel(attacker.cardId);
       invokeBtns += `<button data-invoke-flash="${attackerUid}" class="px-3 py-1.5 rounded-xl border border-orange-600/60 bg-orange-950/60 text-orange-100 text-sm font-semibold hover:bg-orange-900/60 transition-colors">${attacker.name}: Invoke Flash${sLabel ? ` <span class="text-gray-400 text-xs font-normal">${sLabel}</span>` : ""}</button>`;
     }
+    // anyAttackStep spirits (e.g. Duntekleo) can invoke flash even when not the attacker
+    you.spirits.forEach((s) => {
+      if (s.uid !== attackerUid && game.canInvokeFlash(s.uid).ok) {
+        const sLabel = _invokeFlashLabel(s.cardId);
+        invokeBtns += `<button data-invoke-flash="${s.uid}" class="px-3 py-1.5 rounded-xl border border-orange-600/60 bg-orange-950/60 text-orange-100 text-sm font-semibold hover:bg-orange-900/60 transition-colors">${s.name}: Invoke Flash${sLabel ? ` <span class="text-gray-400 text-xs font-normal">${sLabel}</span>` : ""}</button>`;
+      }
+    });
     you.nexuses.forEach((n) => {
       if (game.canInvokeNexusFlash(n.uid).ok) {
         const nLabel = _invokeFlashLabel(n.cardId);
@@ -1313,7 +1412,19 @@ function renderFlashModal(state) {
     });
   }
 
-  const hasActions = magicBtns || invokeBtns;
+  // Defender flash-summon buttons (when human is defending)
+  let defSummonBtns = "";
+  if (!isHumanAttacking) {
+    defSummonBtns = you.hand.map((cid, idx) => {
+      const card = CARD_POOL[cid];
+      if (!card || card.type !== "spirit") return "";
+      const v = game.canFlashSummon(idx);
+      if (!v.ok) return "";
+      return `<button data-flash-summon="${idx}" class="px-3 py-1.5 rounded-xl border border-sky-600/60 bg-sky-950/60 text-sky-100 text-sm font-semibold hover:bg-sky-900/60 transition-colors">Flash Summon: ${card.name} <span class="text-gray-400 text-xs ml-1">(${v.actualCost}c)</span></button>`;
+    }).join("");
+  }
+
+  const hasActions = magicBtns || invokeBtns || defSummonBtns;
   return `
     <div class="fixed inset-0 z-50 flex items-end justify-center p-4 pointer-events-none">
       <div class="pointer-events-auto w-full max-w-lg rounded-2xl border border-yellow-500/60 bg-gray-950/96 p-5 shadow-2xl backdrop-blur-sm" style="box-shadow:0 0 40px rgba(202,138,4,0.18)">
@@ -1323,7 +1434,7 @@ function renderFlashModal(state) {
           <span class="ml-auto text-xs text-gray-500">${attacker ? attacker.name + " attacks" : ""}</span>
         </div>
         <p class="text-gray-500 text-xs mb-4">Use Flash effects before blocking, or pass.</p>
-        ${hasActions ? `<div class="flex flex-wrap gap-2 mb-3">${magicBtns}${invokeBtns}</div>` : `<p class="text-gray-600 text-sm mb-3 italic">No Flash effects available.</p>`}
+        ${hasActions ? `<div class="flex flex-wrap gap-2 mb-3">${magicBtns}${invokeBtns}${defSummonBtns}</div>` : `<p class="text-gray-600 text-sm mb-3 italic">No Flash effects available.</p>`}
         <button id="passFlash" class="w-full rounded-xl border border-gray-700 bg-gray-800/80 py-2 text-sm font-semibold text-gray-300 hover:bg-gray-700 transition-colors">Pass — proceed to block</button>
       </div>
     </div>`;
@@ -1347,8 +1458,8 @@ function renderEffectModal(state) {
 
   let targetBtns = "";
 
-  const OWN_SPIRIT_EFFECTS = new Set(["coreFromVoidToOwnSpirit", "refreshOwnSpirit", "destroyOwnSpirit", "exhaustOwnSpirit", "tombsPickPurple", "exhaustToBlock", "coreFromTrashToOwnSpirit", "bpBoostOwnClashSpirit2000", "triggerSummonEffect"]);
-  const OPP_SPIRIT_EFFECTS = new Set(["destroySpirit", "sendCoreFromSpirit", "sendCoreAndDrawIfDepleted", "drainToOne", "exhaustSpirit", "returnToHand", "returnToDeckBottom", "bpDamage2000", "bpDamage4000", "forceAttack", "defensiveGateSecond"]);
+  const OWN_SPIRIT_EFFECTS = new Set(["coreFromVoidToOwnSpirit", "refreshOwnSpirit", "destroyOwnSpirit", "exhaustOwnSpirit", "tombsPickPurple", "exhaustToBlock", "coreFromTrashToOwnSpirit", "bpBoostOwnClashSpirit2000", "triggerSummonEffect", "quarryPlainRefresh", "coelaTargetAF"]);
+  const OPP_SPIRIT_EFFECTS = new Set(["destroySpirit", "sendCoreFromSpirit", "sendCoreAndDrawIfDepleted", "drainToOne", "exhaustSpirit", "returnToHand", "returnToDeckBottom", "bpDamage2000", "bpDamage4000", "forceAttack", "defensiveGateSecond", "barrageForestDestroy", "bubbleClusterExhaust", "forceExhaustedBlock"]);
 
   if (OWN_SPIRIT_EFFECTS.has(eff.type)) {
     targetBtns = eff.validTargets.map((uid) => {
@@ -1383,6 +1494,19 @@ function renderEffectModal(state) {
       const cardId = you.hand[idx];
       const card = CARD_POOL[cardId];
       return card ? `<button data-resolve-effect="${idxStr}" class="${CARD_GREEN}">${card.name}</button>` : "";
+    }).join("");
+  } else if (eff.type === "feedingDrawReturnCards" || eff.type === "menhirCircleSelectCards" || eff.type === "rockDrillingSelectCards" || eff.type === "nestlingSelectCards" || eff.type === "emeraldAbyssInvokeMain") {
+    // Hand card selection effects - validTargets contains card IDs
+    const maxSelect = eff.type === "feedingDrawReturnCards" ? 2 :
+                     eff.type === "menhirCircleSelectCards" ? 2 :
+                     eff.type === "rockDrillingSelectCards" ? 3 :
+                     eff.type === "emeraldAbyssInvokeMain" ? 1 : 2;
+    const selectedSet = new Set(multiSelectCards?.selectedCards ?? []);
+    targetBtns = eff.validTargets.map((cardId) => {
+      const card = CARD_POOL[cardId];
+      const isSelected = selectedSet.has(cardId);
+      const btnClass = isSelected ? "px-3 py-1.5 rounded-xl border border-yellow-500 bg-yellow-950/70 text-yellow-100 text-sm font-semibold" : CARD_GREEN;
+      return card ? `<button data-resolve-card="${cardId}" class="${btnClass}" data-select-max="${maxSelect}">${card.name}${isSelected ? " ✓" : ""}</button>` : "";
     }).join("");
   } else if (eff.type === "magirrateMagicTarget") {
     const allSpirits = [...you.spirits, ...opp.spirits];
@@ -1422,6 +1546,27 @@ function renderEffectModal(state) {
   const noTargets = eff.validTargets.length === 0;
   const showSkip = eff.optional || noTargets;
   const skipLabel = noTargets ? "OK" : "Skip";
+  
+  // For multi-select: show submit button when ready
+  const isMultiSelect = ["feedingDrawReturnCards", "menhirCircleSelectCards", "rockDrillingSelectCards", "nestlingSelectCards", "emeraldAbyssInvokeMain"].includes(eff.type);
+  const maxSelect = isMultiSelect ?
+    (eff.type === "feedingDrawReturnCards" ? 2 :
+     eff.type === "menhirCircleSelectCards" ? 2 :
+     eff.type === "rockDrillingSelectCards" ? 3 :
+     eff.type === "emeraldAbyssInvokeMain" ? 1 : 2) : 0;
+  const selectedCount = multiSelectCards?.selectedCards?.length ?? 0;
+
+  let submitBtn = "";
+  if (isMultiSelect) {
+    const isReady = (eff.type === "feedingDrawReturnCards" && selectedCount === 2) ||
+                   (eff.type === "menhirCircleSelectCards" && selectedCount <= 2 && selectedCount > 0) ||
+                   (eff.type === "rockDrillingSelectCards" && selectedCount <= 3 && selectedCount > 0) ||
+                   (eff.type === "nestlingSelectCards" && selectedCount <= 2 && selectedCount > 0) ||
+                   (eff.type === "emeraldAbyssInvokeMain" && selectedCount === 1);
+    submitBtn = isReady ? 
+      `<button data-resolve-effect="submit" class="px-3 py-1.5 rounded-xl border border-green-600/50 bg-green-950/60 text-green-100 text-sm font-semibold hover:bg-green-900/60 transition-colors">Submit (${selectedCount}/${maxSelect})</button>` : "";
+  }
+  
   const skipBtn = showSkip
     ? `<button data-resolve-effect="skip" class="px-3 py-1.5 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 text-sm font-semibold hover:bg-gray-700 transition-colors">${skipLabel}</button>` : "";
 
@@ -1432,7 +1577,7 @@ function renderEffectModal(state) {
           <span class="text-sky-400 text-lg">✦</span>
           <h3 class="text-sky-200 font-bold text-base" style="font-family:'Chakra Petch',sans-serif">${eff.label}</h3>
         </div>
-        <div class="flex flex-wrap gap-2">${targetBtns}${skipBtn}</div>
+        <div class="flex flex-wrap gap-2">${targetBtns}${submitBtn}${skipBtn}</div>
       </div>
     </div>`;
 }
@@ -1644,6 +1789,9 @@ function renderModals(state) {
   document.querySelectorAll("[data-invoke-nexus-flash]").forEach((el) => {
     el.onclick = () => clickInvokeNexusFlash(el.getAttribute("data-invoke-nexus-flash"));
   });
+  document.querySelectorAll("[data-flash-summon]").forEach((el) => {
+    el.onclick = () => clickFlashSummon(el.getAttribute("data-flash-summon"));
+  });
   document.getElementById("passFlash")?.addEventListener("click", clickPassFlash);
 
   // Block
@@ -1802,6 +1950,12 @@ function renderMatch() {
   document.querySelectorAll("[data-attack]").forEach((el) => {
     el.onclick = () => clickAttack(el.getAttribute("data-attack"));
   });
+  document.querySelectorAll("[data-invoke-main]").forEach((el) => {
+    el.onclick = () => clickInvokeMain(el.getAttribute("data-invoke-main"));
+  });
+  document.querySelectorAll("[data-invoke-nexus-main]").forEach((el) => {
+    el.onclick = () => clickInvokeNexusMain(el.getAttribute("data-invoke-nexus-main"));
+  });
   document.querySelectorAll("[data-mv]").forEach((el) => {
     el.onclick = () => {
       const [ft, fu, tt, tu, sc] = el.getAttribute("data-mv").split(",");
@@ -1877,11 +2031,14 @@ function renderCardGallery() {
   const allCards = Object.values(CARD_POOL);
   const colors = [...new Set(allCards.map(c => c.color).filter(Boolean))].sort();
   const types = [...new Set(allCards.map(c => c.type).filter(Boolean))].sort();
+  const sets = [...new Set(allCards.map(c => c.set).filter(Boolean))].sort();
 
   const q = gallerySearch.toLowerCase();
   const filtered = allCards.filter(card => {
     if (galleryColorFilter && card.color !== galleryColorFilter) return false;
     if (galleryTypeFilter && card.type !== galleryTypeFilter) return false;
+    if (gallerySetFilter && card.set !== gallerySetFilter) return false;
+    if (galleryFormatFilter && card.format !== galleryFormatFilter) return false;
     if (q) {
       const str = (v) => Array.isArray(v) ? v.join(" ") : (v ?? "");
       return (
@@ -1894,23 +2051,35 @@ function renderCardGallery() {
     return true;
   });
 
+  const isAllActive = !galleryColorFilter && !galleryTypeFilter && !gallerySetFilter && !galleryFormatFilter;
+
   const colorBtns = colors.map(c => {
     const dot = `<span class="gallery-filter-dot" style="background:${COLOR_CSS[c] ?? "#aaa"}"></span>`;
     return `<button class="gallery-filter-btn${galleryColorFilter === c ? " active" : ""}" data-color="${c}">${dot}${c}</button>`;
   }).join("");
 
-  const typeBtns = types.map(t => `
-    <button class="gallery-filter-btn${galleryTypeFilter === t ? " active" : ""}" data-type="${t}">${t}</button>`
+  const typeBtns = types.map(t =>
+    `<button class="gallery-filter-btn${galleryTypeFilter === t ? " active" : ""}" data-type="${t}">${t}</button>`
+  ).join("");
+
+  const setBtns = sets.map(s =>
+    `<button class="gallery-filter-btn${gallerySetFilter === s ? " active" : ""}" data-set="${s}">${SET_LABELS[s] ?? s}</button>`
+  ).join("");
+
+  const formatBtns = ["Standard", "Eternal"].map(f =>
+    `<button class="gallery-filter-btn${galleryFormatFilter === f ? " active" : ""}" data-format="${f}">${f}</button>`
   ).join("");
 
   const cardsHtml = filtered.length ? filtered.map(card => {
     const dotColor = COLOR_CSS[card.color] ?? "#aaa";
+    const setTag = card.set ? `<span class="gallery-card-set">${SET_LABELS[card.set] ?? card.set}</span>` : "";
     return `
       <button class="gallery-card-item" data-cid="${card.id}" title="${card.name}">
         <img src="${card.image}" alt="${card.name}" loading="lazy" class="gallery-card-img" />
         <div class="gallery-card-label">
           <span class="gallery-card-dot" style="background:${dotColor}"></span>
           <span class="gallery-card-name">${card.name}</span>
+          ${setTag}
         </div>
       </button>`;
   }).join("") : `<p class="gallery-empty">No cards found</p>`;
@@ -1927,10 +2096,14 @@ function renderCardGallery() {
       <div class="gallery-controls">
         <input type="search" id="gallery-search" class="gallery-search-input" placeholder="Search name, family, keyword…" value="${gallerySearch.replace(/"/g, '&quot;')}" autocomplete="off" />
         <div class="gallery-filters">
-          <button class="gallery-filter-btn${!galleryColorFilter && !galleryTypeFilter ? " active" : ""}" id="gallery-all">All</button>
+          <button class="gallery-filter-btn${isAllActive ? " active" : ""}" id="gallery-all">All</button>
           ${colorBtns}
           <span class="gallery-filter-sep">|</span>
           ${typeBtns}
+          <span class="gallery-filter-sep">|</span>
+          ${setBtns}
+          <span class="gallery-filter-sep">|</span>
+          ${formatBtns}
         </div>
       </div>
       <div class="gallery-grid">${cardsHtml}</div>
@@ -1949,13 +2122,19 @@ function renderCardGallery() {
   };
 
   document.getElementById("gallery-all")?.addEventListener("click", () => {
-    galleryColorFilter = null; galleryTypeFilter = null; renderCardGallery();
+    galleryColorFilter = null; galleryTypeFilter = null; gallerySetFilter = null; galleryFormatFilter = null; renderCardGallery();
   });
   document.querySelectorAll("[data-color]").forEach(btn => {
     btn.onclick = () => { galleryColorFilter = galleryColorFilter === btn.dataset.color ? null : btn.dataset.color; renderCardGallery(); };
   });
   document.querySelectorAll("[data-type]").forEach(btn => {
     btn.onclick = () => { galleryTypeFilter = galleryTypeFilter === btn.dataset.type ? null : btn.dataset.type; renderCardGallery(); };
+  });
+  document.querySelectorAll("[data-set]").forEach(btn => {
+    btn.onclick = () => { gallerySetFilter = gallerySetFilter === btn.dataset.set ? null : btn.dataset.set; renderCardGallery(); };
+  });
+  document.querySelectorAll("[data-format]").forEach(btn => {
+    btn.onclick = () => { galleryFormatFilter = galleryFormatFilter === btn.dataset.format ? null : btn.dataset.format; renderCardGallery(); };
   });
   document.querySelectorAll(".gallery-card-item").forEach(btn => {
     btn.onclick = () => { galleryDetailId = btn.dataset.cid; renderCardGallery(); };
@@ -1983,6 +2162,32 @@ function renderMenu() {
   document.getElementById("toGallery").onclick = () => { screen = "gallery"; render(); };
 }
 
+function renderDeckListModal(deckId) {
+  const deck = DECKS[deckId];
+  if (!deck) return "";
+  const rows = deck.cards.map(cid => {
+    const c = CARD_POOL[cid];
+    if (!c) return "";
+    const dot = c.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLOR_CSS[c.color] ?? "#aaa"};margin-right:4px;flex-shrink:0"></span>` : "";
+    return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #1f2937">
+      <img src="${c.image}" alt="${c.name}" style="width:32px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0">
+      <span style="flex:1;font-size:12px;color:#e5e7eb">${dot}${c.name}</span>
+      <span style="font-size:11px;color:#6b7280">${c.type ?? ""}</span>
+    </div>`;
+  }).join("");
+  return `
+    <div id="deck-list-backdrop" style="position:fixed;inset:0;z-index:60;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto">
+      <div style="width:100%;max-width:320px;background:#111827;border:1px solid #374151;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.8)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1f2937">
+          <span style="font-weight:bold;color:#fff">${deck.name}</span>
+          <span style="font-size:12px;color:#6b7280">${deck.cards.length} cards</span>
+          <button id="deck-list-close" style="width:28px;height:28px;border-radius:50%;background:#1f2937;border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+        <div style="padding:8px 16px;max-height:60vh;overflow-y:auto">${rows}</div>
+      </div>
+    </div>`;
+}
+
 function renderDeckSelect() {
   const decks = Object.values(DECKS);
 
@@ -1991,12 +2196,17 @@ function renderDeckSelect() {
     return decks.map(d => {
       const cover = CARD_POOL[d.cards[0]]?.image ?? "";
       const sel = d.id === currentId ? " selected" : "";
-      return `<button class="deck-card${sel}" data-id="${d.id}" data-owner="${owner}">
-        <img src="${cover}" alt="${d.name}">
-        <span>${d.name}</span>
-      </button>`;
+      return `<div class="deck-card-wrap">
+        <button class="deck-card${sel}" data-id="${d.id}" data-owner="${owner}">
+          <img src="${cover}" alt="${d.name}">
+          <span>${d.name}</span>
+        </button>
+        <button class="deck-list-btn" data-deckid="${d.id}">List</button>
+      </div>`;
     }).join("");
   }
+
+  const modal = deckListViewId ? renderDeckListModal(deckListViewId) : "";
 
   root.innerHTML = `
     <main class="screen deck-screen">
@@ -2015,7 +2225,7 @@ function renderDeckSelect() {
           <button id="startGame" class="primary p-1">Begin</button>
         </div>
       </section>
-    </main>`;
+    </main>${modal}`;
 
   document.querySelectorAll(".deck-card").forEach(btn => {
     btn.onclick = () => {
@@ -2030,8 +2240,17 @@ function renderDeckSelect() {
     };
   });
 
+  document.querySelectorAll(".deck-list-btn").forEach(btn => {
+    btn.onclick = () => { deckListViewId = btn.dataset.deckid; render(); };
+  });
+
   document.getElementById("backMenu").onclick = () => { screen = "menu"; render(); };
   document.getElementById("startGame").onclick = () => startGame();
+
+  const closeBtn = document.getElementById("deck-list-close");
+  if (closeBtn) closeBtn.onclick = () => { deckListViewId = null; render(); };
+  const backdrop = document.getElementById("deck-list-backdrop");
+  if (backdrop) backdrop.onclick = (e) => { if (e.target === backdrop) { deckListViewId = null; render(); } };
 }
 
 // ─── Root render ─────────────────────────────────────────────────────────────

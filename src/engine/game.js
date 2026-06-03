@@ -1,4 +1,10 @@
 import { CARD_POOL, DECKS } from "../data/cards.js";
+import {
+  BS01_CARD_EFFECTS,
+  BS01_MAGIC_EFFECTS,
+  BS01_MAGIC_FLASH_EFFECTS,
+  BS01_INVOKE_FLASH_HANDLERS,
+} from "./bs01-effects.js";
 
 const PHASES = { MAIN: "MAIN", ATTACK: "ATTACK", MAIN2: "MAIN2" };
 const PHASE_ORDER = [PHASES.MAIN, PHASES.ATTACK, PHASES.MAIN2];
@@ -89,6 +95,7 @@ function getRumbleN(spirit) {
 // --- Card effect handlers ---
 
 const CARD_EFFECTS = {
+  ...BS01_CARD_EFFECTS,
   rsd01001Mushakko: {
     onAttack(_game, spirit, _player, level) {
       if (level < 2) return;
@@ -476,22 +483,71 @@ const CARD_EFFECTS = {
 
   rsd03006TheOceanPhantomCoelaCanth: {
     onSummon(game, spirit, player) {
+      // Part 1: put a core from Void to an Armored Fish
       const others = player.spirits.filter((s) => isArmoredFish(s.cardId) && s.uid !== spirit.uid);
-      if (others.length) { others[0].cores.normal += 1; game.addLog(`${spirit.name}: core → ${others[0].name}.`); }
+      if (others.length && player.voidCore > 0) {
+        if (player.isAi) {
+          player.voidCore -= 1;
+          others[0].cores.normal += 1;
+          game.addLog(`${spirit.name}: core from Void → ${others[0].name}.`);
+        } else {
+          game.awaitingEffect = {
+            type: "coelaTargetAF",
+            label: `${spirit.name}: Put a core from the Void to an Armored Fish Spirit`,
+            sourceUid: spirit.uid,
+            ownerId: player.id,
+            validTargets: others.map((s) => s.uid),
+            optional: true,
+            pendingBattleAttackerUid: null,
+          };
+          return;
+        }
+      }
+      // Part 2: if any exhausted Armored Fish, optionally refresh any own spirit
       const hasExhFish = player.spirits.some((s) => isArmoredFish(s.cardId) && s.exhausted);
-      if (hasExhFish) {
+      if (!hasExhFish) return;
+      if (player.isAi) {
         const t = player.spirits.find((s) => s.exhausted);
         if (t) { t.exhausted = false; game.addLog(`${spirit.name}: refreshed ${t.name}.`); }
+      } else {
+        game.awaitingEffect = {
+          type: "refreshOwnSpirit",
+          label: `${spirit.name}: Refresh one of your Spirits`,
+          sourceUid: spirit.uid,
+          ownerId: player.id,
+          validTargets: player.spirits.filter((s) => s.exhausted).map((s) => s.uid),
+          optional: true,
+          pendingBattleAttackerUid: null,
+        };
       }
     },
   },
 
   rsd03007Garizarot: {
-    onAttack(game, spirit, _player, level) {
-      spirit._forceExhaustedBlock = true;
-      if (level < 2) return;
-      spirit.bpBoost = (spirit.bpBoost ?? 0) + 2000;
-      game.addLog(`${spirit.name}: +2000 BP (True Release).`);
+    onAttack(game, spirit, player, level) {
+      if (level >= 2) {
+        spirit.bpBoost = (spirit.bpBoost ?? 0) + 2000;
+        game.addLog(`${spirit.name}: +2000 BP (True Release).`);
+      }
+      const opp = game._opp(player);
+      const exhausted = opp.spirits.filter((s) => s.exhausted);
+      if (!exhausted.length) return;
+      if (player.isAi) {
+        const best = exhausted[0];
+        best._mustBlock = true;
+        spirit._forceExhaustedBlock = true;
+        game.addLog(`${spirit.name}: ${best.name} must block even while exhausted.`);
+      } else {
+        game.awaitingEffect = {
+          type: "forceExhaustedBlock",
+          label: `${spirit.name}: Select opposing exhausted Spirit to force block (optional)`,
+          sourceUid: spirit.uid,
+          ownerId: player.id,
+          validTargets: exhausted.map((s) => s.uid),
+          optional: true,
+          pendingBattleAttackerUid: spirit.uid,
+        };
+      }
     },
   },
 
@@ -546,14 +602,15 @@ const CARD_EFFECTS = {
       if (!targets.length) return;
       if (player.isAi) {
         const best = targets.sort((a, b) => getEffectiveBP(b, CARD_POOL[b.cardId]) - getEffectiveBP(a, CARD_POOL[a.cardId]))[0];
+        best._heavyExhausted = true;
         game.addLog(`${spirit.name}: heavy exhausted ${best.name}.`);
       } else {
-        game.awaitingEffect = { type: "exhaustSpirit", label: "ArmoredHands Squid: Heavy exhaust opposing exhausted Spirit", sourceUid: spirit.uid, ownerId: player.id, validTargets: targets.map((t) => t.uid), optional: true, pendingBattleAttackerUid: null };
+        game.awaitingEffect = { type: "exhaustSpirit", label: "ArmoredHands Squid: Heavy exhaust opposing exhausted Spirit", sourceUid: spirit.uid, ownerId: player.id, validTargets: targets.map((t) => t.uid), optional: true, pendingBattleAttackerUid: null, isHeavyExhaust: true };
       }
     },
     onAttack(_game, spirit, _player, level) {
       if (level < 2) return;
-      spirit._refreshAfterBattle = true;
+      if (!spirit._squidRefreshUsed) spirit._refreshAfterBattle = true;
     },
   },
 
@@ -588,6 +645,9 @@ const CARD_EFFECTS = {
   rsd04003Arsinus: {},
 
   rsd04004TheHeavyClawForclawer: {
+    onAttack(_game, spirit) {
+      spirit._clashActive = true;
+    },
     onStartOpposingAttackStep(game, spirit, player, _level) {
       const opp = game._opp(player);
       const candidates = opp.spirits.filter((s) => !s.exhausted);
@@ -2417,6 +2477,7 @@ const CARD_EFFECTS = {
 // --- Magic effect handlers ---
 
 const MAGIC_EFFECTS = {
+  ...BS01_MAGIC_EFFECTS,
   rsd01012BreakClaw: {
     getMainTargets(game, player) {
       return game._opp(player).nexuses.map((n) => ({ uid: n.uid, label: n.name }));
@@ -2643,7 +2704,7 @@ const MAGIC_EFFECTS = {
             type: "feedingDrawReturnCards",
             label: `Feeding Draw: Select 2 cards from Hand to return to deck bottom`,
             ownerId: player.id,
-            validTargets: player.hand.map((_, i) => i),
+            validTargets: player.hand.slice(),
             optional: false,
             pendingBattleAttackerUid: null,
           };
@@ -2692,6 +2753,7 @@ const MAGIC_EFFECTS = {
 // --- Flash handlers ---
 
 const MAGIC_FLASH_EFFECTS = {
+  ...BS01_MAGIC_FLASH_EFFECTS,
   rsd01012BreakClaw: {
     getFlashTargets(_game, player) {
       return player.spirits.map((s) => ({ uid: s.uid, label: `${s.name} (+3000 BP)` }));
@@ -3568,6 +3630,7 @@ const MAGIC_FLASH_EFFECTS = {
 };
 
 const INVOKE_FLASH_HANDLERS = {
+  ...BS01_INVOKE_FLASH_HANDLERS,
   rsd01007Griffar: {
     canInvoke(spirit, player) {
       return !spirit.flashUsedThisBattle && player.hand.some((id) => isWindfang(id));
@@ -3627,8 +3690,9 @@ const INVOKE_FLASH_HANDLERS = {
       game.addLog(`${spirit.name}: Invoke Flash – exhausted ${nx.name}, core → Trash.`);
     },
   },
-  // [LV2] True Release Attack Invoke Flash: refresh another Armored Fish
+  // [LV2] True Release Your Attack Step Invoke Flash: refresh another Armored Fish (usable even when not attacking)
   rsd03X02TheDeepNestDuntekleo: {
+    anyAttackStep: true,
     canInvoke(spirit, player) {
       const level = getCardLevel(spirit, CARD_POOL[spirit.cardId]);
       return level >= 2 && !spirit.flashUsedThisBattle
@@ -4169,6 +4233,50 @@ const NEXUS_INVOKE_MAIN_HANDLERS = {
       }
     },
   },
+
+  // rsd03010UtmostDepthTheEmeraldAbyss [LV2] True Release Invoke: Main Once Per Turn
+  // Show Cost≤4 Armored Fish from Hand → return to deck bottom → draw 1
+  rsd03010UtmostDepthTheEmeraldAbyss: {
+    canInvoke(nexus, player) {
+      const level = getCardLevel(nexus, CARD_POOL[nexus.cardId]);
+      if (level < 2) return false;
+      if (nexus._oncePerTurnUsed) return false;
+      return player.hand.some((id) => isArmoredFish(id) && (CARD_POOL[id]?.cost ?? 99) <= 4);
+    },
+    invoke(game, nexus, player, targetCardId = null) {
+      nexus._oncePerTurnUsed = true;
+      const candidates = player.hand.filter((id) => isArmoredFish(id) && (CARD_POOL[id]?.cost ?? 99) <= 4);
+      if (!candidates.length) return;
+      if (player.isAi) {
+        const id = candidates[0];
+        const idx = player.hand.indexOf(id);
+        player.hand.splice(idx, 1);
+        player.deck.push(id);
+        draw(player, 1);
+        game.addLog(`${nexus.name}: Invoke Main – showed ${CARD_POOL[id]?.name}, drew 1.`);
+      } else {
+        if (!targetCardId) {
+          game.awaitingEffect = {
+            type: "emeraldAbyssInvokeMain",
+            label: `${nexus.name}: Show a Cost 4 or less Armored Fish from Hand`,
+            sourceUid: nexus.uid,
+            ownerId: player.id,
+            validTargets: candidates,
+            optional: false,
+            pendingBattleAttackerUid: null,
+          };
+          return;
+        }
+        const idx = player.hand.indexOf(targetCardId);
+        if (idx >= 0) {
+          player.hand.splice(idx, 1);
+          player.deck.push(targetCardId);
+          draw(player, 1);
+          game.addLog(`${nexus.name}: Invoke Main – showed ${CARD_POOL[targetCardId]?.name}, drew 1.`);
+        }
+      }
+    },
+  },
 };
 
 // --- Block Invoke Flash handlers ---
@@ -4419,6 +4527,11 @@ export class BattleSpiritGame {
 
   refreshPlayer(player) {
     player.spirits.forEach((s) => {
+      // Don't refresh heavily exhausted spirits
+      if (s._heavyExhausted) {
+        delete s._heavyExhausted;
+        return;
+      }
       s.exhausted = false;
       s.bpBoost = 0;
       delete s._drawOnBattleEnd;
@@ -4432,6 +4545,7 @@ export class BattleSpiritGame {
       delete s._drawOnLifeReduce;
       delete s._cantBlockThisTurn;
       delete s._destroyAfterBattle;
+      delete s._squidRefreshUsed;
     });
     delete player._usedTopazMagicThisTurn;
     delete player._usedThunderDragonMagicThisTurn;
@@ -4466,6 +4580,11 @@ export class BattleSpiritGame {
       CARD_EFFECTS[n.cardId]?.onDrawStep?.(this, n, player, level);
     });
     this.refreshPlayer(player);
+    // Trigger onMainStep for all nexuses at start of Main phase
+    player.nexuses.forEach((n) => {
+      const level = getCardLevel(n, CARD_POOL[n.cardId]);
+      CARD_EFFECTS[n.cardId]?.onMainStep?.(this, n, player, level);
+    });
   }
 
   // --- Core movement ---
@@ -4757,8 +4876,14 @@ export class BattleSpiritGame {
     if (!verdict.ok) return verdict;
     const { actualCost } = verdict;
     const cardId = player.hand[handIndex];
-    const handler = useFlash ? MAGIC_FLASH_EFFECTS[cardId] : MAGIC_EFFECTS[cardId];
-    const targets = useFlash
+    let handler = useFlash ? MAGIC_FLASH_EFFECTS[cardId] : MAGIC_EFFECTS[cardId];
+    // Flash-only magic: fall back to flash handler when played in main
+    let resolveAsFlash = useFlash;
+    if (!useFlash && !handler?.main && !handler?.getMainTargets) {
+      const flashHandler = MAGIC_FLASH_EFFECTS[cardId];
+      if (flashHandler?.flash) { handler = flashHandler; resolveAsFlash = true; }
+    }
+    const targets = resolveAsFlash
       ? (handler?.getFlashTargets?.(this, player) ?? [])
       : (handler?.getMainTargets?.(this, player) ?? []);
 
@@ -4767,7 +4892,7 @@ export class BattleSpiritGame {
         targetUid = targets[0].uid;
       } else {
         this.awaitingEffect = {
-          type: useFlash ? "selectMagicFlashTarget" : "selectMagicTarget",
+          type: resolveAsFlash ? "selectMagicFlashTarget" : "selectMagicTarget",
           label: `${CARD_POOL[cardId]?.name}: Select target`,
           handIndex,
           paySpec,
@@ -4792,7 +4917,7 @@ export class BattleSpiritGame {
     player.hand.splice(handIndex, 1);
     player.trash.push(cardId);
     this.addLog(`${player.name} plays ${CARD_POOL[cardId]?.name} (cost ${actualCost}).`);
-    if (useFlash) {
+    if (resolveAsFlash) {
       handler?.flash?.(this, player, targetUid);
     } else {
       handler?.main?.(this, player, targetUid);
@@ -4866,7 +4991,18 @@ export class BattleSpiritGame {
       if (!targetUid && !eff.optional) return { ok: false, reason: "Must select a target." };
       if (targetUid) this._drainToOne(opp, targetUid);
     } else if (eff.type === "exhaustSpirit") {
-      if (targetUid) { const t = opp.spirits.find(s => s.uid === targetUid); if (t) { t.exhausted = true; this.addLog(`${t.name} exhausted.`); } }
+      if (targetUid) { 
+        const t = opp.spirits.find(s => s.uid === targetUid); 
+        if (t) { 
+          t.exhausted = true; 
+          if (eff.isHeavyExhaust) {
+            t._heavyExhausted = true;
+            this.addLog(`${t.name} heavy exhausted.`);
+          } else {
+            this.addLog(`${t.name} exhausted.`); 
+          }
+        } 
+      }
     } else if (eff.type === "returnToHand") {
       if (!targetUid && !eff.optional) return { ok: false, reason: "Must select a target." };
       if (targetUid) this._returnToHand(opp, targetUid);
@@ -4882,6 +5018,38 @@ export class BattleSpiritGame {
     } else if (eff.type === "summonFromReveal") {
       if (targetUid && player.hand.includes(targetUid)) {
         this.addLog(`Added ${CARD_POOL[targetUid]?.name} to hand.`);
+      }
+    } else if (eff.type === "coelaTargetAF") {
+      // Coela-Canth part 1: put core from Void to chosen Armored Fish
+      if (targetUid && player.voidCore > 0) {
+        const t = player.spirits.find((s) => s.uid === targetUid);
+        if (t) { player.voidCore -= 1; t.cores.normal += 1; this.addLog(`${t.name}: core from Void.`); }
+      }
+      // Part 2: if any exhausted Armored Fish, optionally refresh any own spirit
+      const hasExhFish = player.spirits.some((s) => isArmoredFish(s.cardId) && s.exhausted);
+      if (hasExhFish) {
+        const exhausted = player.spirits.filter((s) => s.exhausted);
+        if (exhausted.length) {
+          this.awaitingEffect = {
+            type: "refreshOwnSpirit",
+            label: `Coela-Canth: Refresh one of your Spirits`,
+            sourceUid: eff.sourceUid,
+            ownerId: player.id,
+            validTargets: exhausted.map((s) => s.uid),
+            optional: true,
+            pendingBattleAttackerUid: null,
+          };
+        }
+      }
+    } else if (eff.type === "forceExhaustedBlock") {
+      if (targetUid) {
+        const t = opp.spirits.find((s) => s.uid === targetUid);
+        if (t) {
+          t._mustBlock = true;
+          const src = player.spirits.find((s) => s.uid === eff.sourceUid);
+          if (src) src._forceExhaustedBlock = true;
+          this.addLog(`${t.name} must block even while exhausted.`);
+        }
       }
     } else if (eff.type === "forceAttack") {
       if (targetUid) {
@@ -5049,6 +5217,94 @@ export class BattleSpiritGame {
         CARD_EFFECTS[n.cardId]?.onNexusMagicPlay?.(this, n, player, getCardLevel(n, CARD_POOL[n.cardId]), cardId);
       });
       return { ok: true };
+    } else if (eff.type === "feedingDrawReturnCards") {
+      // Return 2 cards from hand to deck bottom
+      if (!targetUid) return { ok: false, reason: "Must select cards." };
+      const selectedCards = Array.isArray(targetUid) ? targetUid : [targetUid];
+      if (selectedCards.length !== 2) return { ok: false, reason: "Must select exactly 2 cards." };
+      selectedCards.forEach((cardId) => {
+        const idx = player.hand.indexOf(cardId);
+        if (idx >= 0) {
+          player.hand.splice(idx, 1);
+          player.deck.push(cardId);
+        }
+      });
+      this.addLog(`Feeding Draw: returned 2 cards to deck bottom.`);
+    } else if (eff.type === "menhirCircleSelectCards") {
+      // Return up to 2 White Mineroid cards to deck bottom
+      if (!targetUid) targetUid = [];
+      const selectedCards = Array.isArray(targetUid) ? targetUid : [targetUid];
+      if (selectedCards.length > 2) return { ok: false, reason: "Can select up to 2 cards." };
+      selectedCards.forEach((cardId) => {
+        const idx = player.hand.indexOf(cardId);
+        if (idx >= 0) {
+          player.hand.splice(idx, 1);
+          player.deck.push(cardId);
+        }
+      });
+      const drawn = selectedCards.length;
+      const newCards = player.deck.splice(0, drawn);
+      player.hand.push(...newCards);
+      this.addLog(`The Menhir Circle: returned ${selectedCards.length} card(s), drew ${drawn}.`);
+    } else if (eff.type === "rockDrillingSelectCards") {
+      // Return up to 3 Mineroid cards to deck bottom
+      if (!targetUid) targetUid = [];
+      const selectedCards = Array.isArray(targetUid) ? targetUid : [targetUid];
+      if (selectedCards.length > 3) return { ok: false, reason: "Can select up to 3 cards." };
+      selectedCards.forEach((cardId) => {
+        const idx = player.hand.indexOf(cardId);
+        if (idx >= 0) {
+          player.hand.splice(idx, 1);
+          player.deck.push(cardId);
+        }
+      });
+      const drawn = selectedCards.length;
+      const newCards = player.deck.splice(0, drawn);
+      player.hand.push(...newCards);
+      this.addLog(`Rock Drilling: returned ${selectedCards.length} card(s), drew ${drawn}.`);
+    } else if (eff.type === "nestlingSelectCards") {
+      // Return up to 2 Thunder Dragon cards to deck bottom
+      if (!targetUid) targetUid = [];
+      const selectedCards = Array.isArray(targetUid) ? targetUid : [targetUid];
+      if (selectedCards.length > 2) return { ok: false, reason: "Can select up to 2 cards." };
+      selectedCards.forEach((cardId) => {
+        const idx = player.hand.indexOf(cardId);
+        if (idx >= 0) {
+          player.hand.splice(idx, 1);
+          player.deck.push(cardId);
+        }
+      });
+      const drawn = selectedCards.length;
+      const newCards = player.deck.splice(0, drawn);
+      player.hand.push(...newCards);
+      this.addLog(`Nestling: returned ${selectedCards.length} card(s), drew ${drawn}.`);
+    } else if (eff.type === "emeraldAbyssInvokeMain") {
+      // Emerald Abyss: return shown card to deck bottom, draw 1
+      if (targetUid) {
+        const idx = player.hand.indexOf(targetUid);
+        if (idx >= 0) {
+          player.hand.splice(idx, 1);
+          player.deck.push(targetUid);
+          draw(player, 1);
+          this.addLog(`Emerald Abyss: showed ${CARD_POOL[targetUid]?.name}, drew 1.`);
+        }
+      }
+    } else if (eff.type === "quarryPlainRefresh") {
+      // Refresh target Mineroid Spirit
+      if (targetUid) {
+        const t = player.spirits.find((s) => s.uid === targetUid);
+        if (t) { t.exhausted = false; this.addLog(`${t.name} refreshed.`); }
+      }
+    } else if (eff.type === "bubbleClusterExhaust") {
+      // Exhaust target opposing Spirit
+      if (targetUid) {
+        const t = opp.spirits.find((s) => s.uid === targetUid);
+        if (t) { t.exhausted = true; this.addLog(`${t.name} exhausted.`); }
+      }
+    } else if (eff.type === "barrageForestDestroy") {
+      // Destroy target opposing Cost <= 3 Spirit
+      if (targetUid) this.destroySpirit(opp, targetUid);
+
     }
 
     if (eff.pendingBattleAttackerUid) {
@@ -5059,6 +5315,13 @@ export class BattleSpiritGame {
         return this._proceedToBattle(eff.pendingBattleAttackerUid, aiBlockChooser);
       }
       return { ok: true, awaitingFlash: true };
+    }
+    // Phase continuation: effects created during phase transitions need to resume the phase
+    if (eff._phaseResume === 'startAttackStep') {
+      this._triggerStartAttackStep();
+      this.phaseIndex = 1;
+    } else if (eff._phaseResume === 'endTurn') {
+      this.endTurn();
     }
     return { ok: true };
   }
@@ -5328,6 +5591,7 @@ export class BattleSpiritGame {
       }
       if (stillAlive._refreshAfterBattle) {
         stillAlive.exhausted = false;
+        stillAlive._squidRefreshUsed = true;
         delete stillAlive._refreshAfterBattle;
         this.addLog(`${stillAlive.name}: refreshed after battle.`);
       }
@@ -5342,6 +5606,7 @@ export class BattleSpiritGame {
       delete stillAlive._cantBeBlockedBPLimit;
       delete stillAlive._cantBeBlockedCostLimit;
       delete stillAlive._forceExhaustedBlock;
+      delete stillAlive._mustBlock;
       delete stillAlive._prevBlockerBP;
       delete stillAlive._extraLifeReductionOnWin;
       delete stillAlive._drawTwoOnAttackWin;
@@ -5350,6 +5615,7 @@ export class BattleSpiritGame {
     [...atkPlayer.spirits, ...defPlayer.spirits].forEach((s) => {
       delete s._magicImmune;
       delete s._coreFloorOne;
+      delete s._mustBlock;
     });
     return { ok: true };
   }
@@ -5423,6 +5689,17 @@ export class BattleSpiritGame {
     if (defender.isAi) {
       let blockerUid = aiBlockChooser ? aiBlockChooser(this.getState(), attackerUid) : null;
       if (blockerUid && !this._canBlock(attackerUid, blockerUid)) blockerUid = null;
+      const attacker = this.activePlayer().spirits.find((s) => s.uid === attackerUid);
+      // Clash: AI must block if it has a valid non-exhausted blocker
+      if (!blockerUid && attacker?._clashActive) {
+        const validBlockers = defender.spirits.filter((s) => !s.exhausted && this._canBlock(attackerUid, s.uid));
+        if (validBlockers.length) blockerUid = validBlockers[0].uid;
+      }
+      // forceExhaustedBlock: AI must block with the marked spirit
+      if (!blockerUid && attacker?._forceExhaustedBlock) {
+        const forced = defender.spirits.find((s) => s._mustBlock && this._canBlock(attackerUid, s.uid));
+        if (forced) blockerUid = forced.uid;
+      }
       return this.resolveBattle(attackerUid, blockerUid);
     }
     this.awaitingBlock = { attackerUid, defenderId: defender.id };
@@ -5444,6 +5721,12 @@ export class BattleSpiritGame {
       const defPlayer = this.defendingPlayer();
       const hasValidBlocker = defPlayer.spirits.some((s) => !s.exhausted && this._canBlock(attackerUid, s.uid));
       if (hasValidBlocker) return { ok: false, reason: "Clash — must block if possible." };
+    }
+    // forceExhaustedBlock: a specific spirit is marked to block even while exhausted
+    if (!blockerUidOrNull && attacker?._forceExhaustedBlock) {
+      const defPlayer = this.defendingPlayer();
+      const forced = defPlayer.spirits.find((s) => s._mustBlock && this._canBlock(attackerUid, s.uid));
+      if (forced) return { ok: false, reason: "An exhausted Spirit must block if possible." };
     }
     if (blockerUidOrNull && attacker?._requiresOpponentExhaustToBlock) {
       const defPlayer = this.defendingPlayer();
@@ -5473,13 +5756,23 @@ export class BattleSpiritGame {
     if (current === PHASES.MAIN) {
       if (skipFirst) { this.endTurn(); return; }
       this._triggerStartOpposingAttackStep();
-      if (this.awaitingEffect) return;
+      if (this.awaitingEffect) { this.awaitingEffect._phaseResume = 'startAttackStep'; return; }
       this._triggerStartAttackStep();
       this.phaseIndex = 1;
       return;
     }
-    if (current === PHASES.ATTACK) { this.phaseIndex = 2; return; }
+    if (current === PHASES.ATTACK) {
+      this.phaseIndex = 2;
+      // Trigger onMainStep for nexuses at start of Main2
+      const player2 = this.activePlayer();
+      player2.nexuses.forEach((n) => {
+        const level = getCardLevel(n, CARD_POOL[n.cardId]);
+        CARD_EFFECTS[n.cardId]?.onMainStep?.(this, n, player2, level);
+      });
+      return;
+    }
     this._triggerEndStep();
+    if (this.awaitingEffect) { this.awaitingEffect._phaseResume = 'endTurn'; return; }
     this.endTurn();
   }
 
@@ -5530,6 +5823,10 @@ export class BattleSpiritGame {
     if (this.currentPlayer === 0) {
       // Invoke Flash on attacker (human attacking)
       if (this.canInvokeFlash(this.awaitingFlash.attackerUid).ok) return true;
+      // anyAttackStep spirits (e.g. Duntekleo) can invoke even when not attacking
+      for (const s of human.spirits) {
+        if (s.uid !== this.awaitingFlash.attackerUid && this.canInvokeFlash(s.uid).ok) return true;
+      }
       // Nexus Flash (human attacking)
       for (const n of human.nexuses) {
         if (this.canInvokeNexusFlash(n.uid).ok) return true;
@@ -5661,11 +5958,11 @@ export class BattleSpiritGame {
   canInvokeFlash(spiritUid) {
     if (!this.awaitingFlash) return { ok: false };
     if (this.awaitingEffect) return { ok: false };
-    if (spiritUid !== this.awaitingFlash.attackerUid) return { ok: false, reason: "Only the attacker can invoke." };
     const player = this.activePlayer();
     const spirit = player.spirits.find((s) => s.uid === spiritUid);
     if (!spirit) return { ok: false };
     const h = INVOKE_FLASH_HANDLERS[spirit.cardId];
+    if (spiritUid !== this.awaitingFlash.attackerUid && !h?.anyAttackStep) return { ok: false, reason: "Only the attacker can invoke." };
     if (!h?.canInvoke(spirit, player)) return { ok: false, reason: "Cannot invoke Flash." };
     return { ok: true, spirit, player };
   }
@@ -5695,6 +5992,26 @@ export class BattleSpiritGame {
     if (!verdict.ok) return verdict;
     const { nexus, player } = verdict;
     NEXUS_FLASH_HANDLERS[nexus.cardId].invoke(this, nexus, player, this.awaitingFlash.attackerUid);
+    return { ok: true };
+  }
+
+  canInvokeMain(spiritUid) {
+    const phase = PHASE_ORDER[this.phaseIndex];
+    if (phase !== PHASES.MAIN && phase !== PHASES.MAIN2) return { ok: false };
+    if (this.awaitingEffect) return { ok: false };
+    const player = this.activePlayer();
+    const spirit = player.spirits.find((s) => s.uid === spiritUid);
+    if (!spirit) return { ok: false };
+    const h = INVOKE_MAIN_HANDLERS[spirit.cardId];
+    if (!h?.canInvoke(spirit, player)) return { ok: false };
+    return { ok: true, spirit, player };
+  }
+
+  invokeMain(spiritUid) {
+    const verdict = this.canInvokeMain(spiritUid);
+    if (!verdict.ok) return verdict;
+    const { spirit, player } = verdict;
+    INVOKE_MAIN_HANDLERS[spirit.cardId].invoke(this, spirit, player);
     return { ok: true };
   }
 
